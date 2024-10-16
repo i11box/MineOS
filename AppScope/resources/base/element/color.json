@@ -1,0 +1,44 @@
+{
+  "color": [
+    {
+      "name": "grey1",
+      "value": "#cadce3"
+    },
+    {
+      "name": "grey2",
+      "value": "#9fb7bb"
+    },
+    {
+      "name": "green1",
+      "value": "#9dae64"
+    },
+    {
+      "name": "blue1",
+      "value": "#41a2e9"
+    },
+    {
+      "name": "grey3",
+      "value": "#718d99"
+    },
+    {
+      "name": "green",
+      "value": "#6d804d"
+    },
+    {
+      "name": "blue2",
+      "value": "#476983"
+    },
+    {
+      "name": "dark1",
+      "value": "#435844"
+    },
+    {
+      "name": "dark2",
+      "value": "#2f4229"
+    },
+    {
+      "name": "dark3",
+      "value": "#192b17"
+    }
+  ]
+}

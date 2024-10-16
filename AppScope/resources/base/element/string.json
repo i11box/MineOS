@@ -3,6 +3,10 @@
     {
       "name": "app_name",
       "value": "MineOS"
+    },
+    {
+      "name": "slogan",
+      "value": "故事的结局一定是好的\n如果不好，那就是还没走到尽头"
     }
   ]
 }
