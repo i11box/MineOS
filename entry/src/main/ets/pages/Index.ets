@@ -1,140 +1,74 @@
 import { router } from '@kit.ArkUI';
+import HomeContent from '../view/HomeContent';
+import SettingsContent from '../view/SettingsContent';
+
+interface GeneratedTypeLiteralInterface_1 {
+  slogan: string;
+}
 
 @Entry
 @Component
 struct MainPage {
   @State private selectedTab: number = 0 // 0表示首页，1表示个人设置
+  @State private slogan: string = "加油！"
 
-  build() {
-    Column() {
-      Row(){
-        // 根据selectedTab的状态显示对应的页面
-        if (this.selectedTab === 0) {
-          HomePage()
-        } else {
-          SettingsPage()
-        }
-      }
-      Row(){
-        Tabs({ barPosition: BarPosition.End }) {
-          TabContent() {}
-          .tabBar("首页")
-          TabContent() {}
-          .tabBar("设置")
-        }
-        .vertical(false)
-        .width('100%')
-        .height(20)
-        .scrollable(true)
-        .onChange((index:number)=>{ this.selectedTab = index; })
-      }
-    }
-    .height('100%') // 确保Column占满整个页面
-
-  }
-}
-
-// 首页页面内容
-@Component
-struct HomePage {
-
+  // 构建选项卡
+  // @index: 索引
+  // @icon: 未选中时图标
+  // @selIcon: 选中时图标
+  // @text:选项卡文本
   @Builder
-  build() {
+  TabBarBuilder(index: number, icon: ResourceStr, selIcon: ResourceStr, text: string) {
     Column() {
-      // 顶部封面部分
-      Column() {
-        Text('封面，可以加日期，时钟，标语')
-          .fontSize(20)
-          .textAlign(TextAlign.Center)
-          .fontColor(Color.White)
-          .width('100%')
-          .height(200)
-          .backgroundColor(Color.Blue)
-          .padding(20)
-      }
-      .width('100%')
-      .backgroundColor(Color.White)
-
-      // 中间内容部分
-      Row() {
-        Flex({
-          justifyContent: FlexAlign.SpaceAround
-        }) {
-          // 日程
-          Column() {
-            Button('日程', { type: ButtonType.Normal, stateEffect: true })
-              .onClick(() => {
-                console.log('Button onClick')
-              })
-              .height(100)
-              .width(100)
-              .borderRadius(40)
-          }
-
-          // 占位符1
-          Column() {
-            Text('占位符')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .textAlign(TextAlign.Center)
-              .fontColor(Color.Black)
-              .width(100)
-              .height(100)
-              .backgroundColor(Color.Gray)
-              .borderRadius(10)
-              .padding(20)
-          }
-
-          // 占位符2
-          Column() {
-            Text('占位符')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .textAlign(TextAlign.Center)
-              .fontColor(Color.Black)
-              .width(100)
-              .height(100)
-              .backgroundColor(Color.Gray)
-              .borderRadius(10)
-              .padding(20)
-          }
-        }
-      }
-      .width('100%')
-      .padding(20)
-    }
-    .height('100%')
-  }
-}
-
-//
-@Component
-struct SettingsPage {
-  @State private input1Value: string = ''
-  @State private input2Value: string = ''
-
-  build() {
-    List() {
-      // 设置项1
-      ListItem() {
-        Column(){
-          Text('设置项1').fontSize(16).fontColor(Color.Gray)
-          TextInput({
-            placeholder: '输入框'
-          }).width('90%')
-        }
-      }
-
-      // 个人标语
-      ListItem() {
-        Column(){
-          Text('个人标语').fontSize(16).fontColor(Color.Gray)
-          TextInput({
-            placeholder: '输入框'
-          }).width('90%')
-        }
-      }
+      Image(this.selectedTab === index ? selIcon : icon)
+        .size({width:30,height:30})
+        .margin(7)
+      Text(text)
+        .fontSize(12)
+        .fontColor(this.selectedTab === index ? $r('app.color.GREEN3') : $r('app.color.grey2'))
     }
     .width('100%')
   }
+
+  // 构建
+  build() {
+    Tabs({
+      barPosition: BarPosition.End,
+      index: this.selectedTab
+    }) {
+      TabContent() {
+        HomeContent({ slogan: this.slogan })
+      }
+      .tabBar(this.TabBarBuilder(
+        0,
+        $r('app.media.ic_public_home'),
+        $r('app.media.ic_public_home_filled'),
+        "主页"
+      )).backgroundColor(Color.White)
+
+      TabContent() {
+        SettingsContent({ slogan: this.slogan })
+      }
+      .tabBar(this.TabBarBuilder(
+        1,
+        $r('app.media.ic_public_settings'),
+        $r('app.media.ic_public_settings_filled'),
+        "设置"
+      )).backgroundColor(Color.White)
+    }
+    .width('100%')
+    .height('102%')
+    .onChange((index: number) => {
+      this.selectedTab = index;
+    })
+    .backgroundColor($r('app.color.KAQI1'))
+  }
+
+  aboutToAppear(): void {
+    let routerParams = router.getParams() as GeneratedTypeLiteralInterface_1; // 使用类型断言，该接口包含路由中的所有类型;
+    if (routerParams) {
+      this.slogan = routerParams.slogan;
+    }
+  }
 }
+

@@ -3,6 +3,46 @@
     {
       "name": "start_window_background",
       "value": "#FFFFFF"
+    },
+    {
+      "name": "KAQI1",
+      "value": "#DFD4BE"
+    },
+    {
+      "name": "KAQI2",
+      "value": "#C4B69C"
+    },
+    {
+      "name": "GREEN1",
+      "value": "#AAC17A"
+    },
+    {
+      "name": "GREEN2",
+      "value": "#92A76C"
+    },
+    {
+      "name": "GREEN3",
+      "value": "#809660"
+    },
+    {
+      "name": "GREEN4",
+      "value": "#678C4E"
+    },
+    {
+      "name": "GREEN5",
+      "value": "#49722F"
+    },
+    {
+      "name": "DARK1",
+      "value": "#565D3E"
+    },
+    {
+      "name": "DARK2",
+      "value": "#313B24"
+    },
+    {
+      "name": "DARK3",
+      "value": "#10160C"
     }
   ]
 }
