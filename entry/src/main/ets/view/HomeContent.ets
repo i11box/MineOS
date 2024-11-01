@@ -1,3 +1,5 @@
+import { hilog } from "@kit.PerformanceAnalysisKit"
+
 // 首页页面内容
 @Component
 export default struct HomeContent {
@@ -8,14 +10,16 @@ export default struct HomeContent {
     Column() {
       // 顶部封面部分
       Column() {
-        Text(this.slogan)
-          .fontSize(20)
-          .textAlign(TextAlign.Center)
-          .fontColor(Color.White)
-          .width('100%')
-          .height(200)
-          .backgroundColor(Color.Blue)
-          .padding(20)
+        Stack(){
+          Image($r('app.media.blackboard')).width('100%').height('30%')
+          Text(this.slogan)
+            .fontSize(20)
+            .textAlign(TextAlign.Center)
+            .fontColor(Color.White)
+            .width('100%')
+            .height(200)
+            .padding(20)
+        }
       }
       .width('100%')
       .backgroundColor(Color.White)
@@ -30,6 +34,7 @@ export default struct HomeContent {
             Button('日程', { type: ButtonType.Normal, stateEffect: true })
               .onClick(() => {
                 console.log('Button onClick')
+
               })
               .height(100)
               .width(100)
