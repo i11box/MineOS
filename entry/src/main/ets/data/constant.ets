@@ -9,7 +9,7 @@ export const DB_CONFIG : relationalStore.StoreConfig = {
 
 // Schedule 表定义
 export const GET_TABLE_SCHEDULE = `
-  CREATE TABLE schedule (
+  CREATE TABLE IF NOT EXISTS schedule (
       schedule_sn INTEGER PRIMARY KEY,
       schedule_name TEXT NOT NULL,
       start_time TEXT,                -- 使用 ISO8601 格式的字符串存储日期时间
@@ -27,7 +27,7 @@ export const GET_TABLE_SCHEDULE = `
 
 // ScheduleList 表定义
 export const GET_TABLE_SCHEDULE_LIST = `
-  CREATE TABLE schedule_list (
+  CREATE TABLE IF NOT EXISTS schedule_list (
       list_sn INTEGER PRIMARY KEY,
       list_name TEXT NOT NULL
   );
@@ -35,7 +35,7 @@ export const GET_TABLE_SCHEDULE_LIST = `
 
 // ScheduleList_Schedule 关联表定义
 export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
-  CREATE TABLE schedule_list_schedule (
+  CREATE TABLE IF NOT EXISTS schedule_list_schedule (
     list_sn INTEGER NOT NULL,
     schedule_sn INTEGER NOT NULL,
     FOREIGN KEY(list_sn) REFERENCES schedule_list(list_sn),
@@ -46,7 +46,7 @@ export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
 
 // Schedule_Tag 关联表定义
 export const GET_TABLE_SCHEDULE_TAG = `
-  CREATE TABLE schedule_tag (
+  CREATE TABLE IF NOT EXISTS schedule_tag (
     schedule_sn INTEGER NOT NULL,
     tag_sn INTEGER NOT NULL,
     FOREIGN KEY(schedule_sn) REFERENCES schedule(schedule_sn),
@@ -57,7 +57,7 @@ export const GET_TABLE_SCHEDULE_TAG = `
 
 // Tag 表定义
 export const GET_TABLE_TAG = `
-  CREATE TABLE tag (
+  CREATE TABLE IF NOT EXISTS tag (
       tag_sn INTEGER PRIMARY KEY,
       tag_name TEXT NOT NULL
   );
@@ -66,6 +66,7 @@ export const GET_TABLE_TAG = `
 export const GET_TABLE:string[] = [
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
+  GET_TABLE_TAG,
   GET_TABLE_SCHEDULE_LIST_SCHEDULE,
-  GET_TABLE_SCHEDULE_TAG,
+  GET_TABLE_SCHEDULE_TAG
 ]

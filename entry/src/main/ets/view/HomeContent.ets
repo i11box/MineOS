@@ -1,4 +1,6 @@
 import { hilog } from "@kit.PerformanceAnalysisKit"
+import { router } from "@kit.ArkUI"
+import { url } from "@kit.ArkTS"
 
 // 首页页面内容
 @Component
@@ -34,7 +36,7 @@ export default struct HomeContent {
             Button('日程', { type: ButtonType.Normal, stateEffect: true })
               .onClick(() => {
                 console.log('Button onClick')
-
+                router.pushUrl( {url: 'pages/Sche'})
               })
               .height(100)
               .width(100)

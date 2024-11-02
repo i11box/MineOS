@@ -40,15 +40,8 @@ export class DataBase{
   db :relationalStore.RdbStore|undefined = undefined
 
   //--------------------------关于数据库的创建-------------------------
-  async getDB(context:common.BaseContext){
-    relationalStore.getRdbStore(context,dbConstant.DB_CONFIG)
-      .then(
-        async (rdbStore: relationalStore.RdbStore) => {
-          this.db = rdbStore;
-          console.info('建库/获取库成功')
-      }).catch((e:BusinessError)=>{
-      console.error(`Get RdbStore failed, code is ${e.code},message is ${e.message}`);
-    })
+  constructor(rdb:relationalStore.RdbStore) {
+    this.db = rdb;
   }
 
   async createTable(getTable: string) {
@@ -71,11 +64,6 @@ export class DataBase{
     console.info("所有表创建成功");
   }
 
-  // 主初始化方法，确保按顺序执行
-  async initDatabase(context: common.BaseContext): Promise<void> {
-    await this.getDB(context);
-    await this.initDB();
-  }
   //------------------------关于日程的访问----------------------------
   // 增加日程
   async addSchedule(scheduleData: scheduleClass.Schedule): Promise<void> {
