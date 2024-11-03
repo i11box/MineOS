@@ -35,17 +35,72 @@ function tagToValuesBucket(tag: scheduleClass.Tag): relationalStore.ValuesBucket
 
 //-----------------数据库类-------------------------------
 
+export class DataBaseHelper {
+  private static dbInstance : DataBase | null = null;
+  private static isInitializing:boolean = false;
+
+  static async dbExecute(context: common.BaseContext, callback?: (db: DataBase) => void): Promise<boolean> {
+    // 如果已经存在实例，直接调用回调函数
+    if (DataBaseHelper.dbInstance) {
+      if (callback) callback(DataBaseHelper.dbInstance);
+      return true;
+    }
+
+    // 如果正在初始化，等待初始化完成
+    if (DataBaseHelper.isInitializing) {
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (DataBaseHelper.dbInstance) {
+            clearInterval(checkInterval);
+            if (callback) callback(DataBaseHelper.dbInstance!);
+            resolve(true);
+          }
+        }, 50);
+      });
+    }
+
+    // 设置初始化标志
+    DataBaseHelper.isInitializing = true;
+
+    // 初始化数据库
+    try {
+      const dbTemp: relationalStore.RdbStore = await new Promise((resolve, reject) => {
+        relationalStore.getRdbStore(context, dbConstant.DB_CONFIG, (e, rdb) => {
+          if (e) {
+            console.error(`Get RdbStore failed, code is ${e.code}, message is ${e.message}`);
+            DataBaseHelper.isInitializing = false;
+            reject(e);
+            return;
+          }
+
+          console.info('Get RdbStore successfully.');
+          resolve(rdb);
+        });
+      });
+
+      DataBaseHelper.dbInstance = new DataBase(dbTemp);
+      DataBaseHelper.isInitializing = false;
+      if (callback) callback(DataBaseHelper.dbInstance);
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize the database:", error);
+      DataBaseHelper.isInitializing = false;
+      return false;
+    }
+  }
+}
+
 export class DataBase{
   //----------------------数据库的属性-----------------------------
-  db :relationalStore.RdbStore|undefined = undefined
+  db :relationalStore.RdbStore|null = null
 
   //--------------------------关于数据库的创建-------------------------
-  constructor(rdb:relationalStore.RdbStore) {
+  constructor(rdb:relationalStore.RdbStore|null) {
     this.db = rdb;
   }
 
   async createTable(getTable: string) {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error(`db is empty, retry`);
     } else {
       try {
@@ -68,7 +123,7 @@ export class DataBase{
   // 增加日程
   async addSchedule(scheduleData: scheduleClass.Schedule): Promise<void> {
     const schedule = scheduleToValuesBucket(scheduleData)
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -83,7 +138,7 @@ export class DataBase{
   // 更新日程
   async updateSchedule(scheduleID: number, updatedData: scheduleClass.Schedule): Promise<void> {
     const schedule = scheduleToValuesBucket(updatedData)
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -100,7 +155,7 @@ export class DataBase{
 
   // 删除日程
   async deleteSchedule(scheduleID: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -117,7 +172,7 @@ export class DataBase{
 
   // 查询日程
   async queryScheduleBySn(scheduleSn: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -148,7 +203,7 @@ export class DataBase{
   // 增加日程列表
   async addScheduleList(scheduleList: scheduleClass.ScheduleList): Promise<void> {
     const valuesBucket = scheduleListToValuesBucket(scheduleList);
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -163,7 +218,7 @@ export class DataBase{
   // 更新日程列表
   async updateScheduleList(listID: number, updatedData: scheduleClass.ScheduleList): Promise<void> {
     const valuesBucket = scheduleListToValuesBucket(updatedData);
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -180,7 +235,7 @@ export class DataBase{
 
   // 删除日程列表
   async deleteScheduleList(listID: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -197,7 +252,7 @@ export class DataBase{
 
   // 查询日程列表
   async queryScheduleListBySn(listSn: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -225,7 +280,7 @@ export class DataBase{
   // 增加标签
   async addTag(tag: scheduleClass.Tag): Promise<void> {
     const valuesBucket = tagToValuesBucket(tag);
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -240,7 +295,7 @@ export class DataBase{
   // 更新标签
   async updateTag(tagID: number, updatedTag: scheduleClass.Tag): Promise<void> {
     const valuesBucket = tagToValuesBucket(updatedTag);
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -257,7 +312,7 @@ export class DataBase{
 
   // 删除标签
   async deleteTag(tagID: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }
@@ -274,7 +329,7 @@ export class DataBase{
 
   // 查询标签
   async queryTagBySn(tagSn: number): Promise<void> {
-    if (this.db === undefined) {
+    if (this.db === null) {
       console.error("数据库未初始化");
       return;
     }

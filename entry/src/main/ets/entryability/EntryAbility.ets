@@ -19,15 +19,10 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    relationalStore.getRdbStore(this.context,dbConstant.DB_CONFIG,(e,rdb)=>{
-      let db = new database.DataBase(rdb)
-      if (e) {
-        console.error(`Get RdbStore failed, code is ${e.code},message is ${e.message}`);
-        return;
-      }
-      db.initDB()
-      console.info('Get RdbStore successfully.');
-    })
+    database.DataBaseHelper.dbExecute(this.context,(db)=>{if(db) db.initDB()})
+
+    console.info('Get RdbStore successfully.');
+
 
     windowStage.loadContent('pages/Welcome', (err) => {
       if (err.code) {
