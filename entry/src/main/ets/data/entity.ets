@@ -7,7 +7,6 @@ import * as scheduleClass from '../packages/schedule/schedule'
 // --------------将对象转为valueBucket---------------------
 function scheduleToValuesBucket(schedule:scheduleClass.Schedule): relationalStore.ValuesBucket {
   return {
-    schedule_sn: schedule.scheduleSn,
     schedule_content: schedule.content,
     schedule_name: schedule.name,
     start_time: schedule.startTime ? schedule.startTime.toISOString() : null, // 将 Date 转为 ISO8601 字符串
@@ -21,14 +20,12 @@ function scheduleToValuesBucket(schedule:scheduleClass.Schedule): relationalStor
 
 function scheduleListToValuesBucket(scheduleList:scheduleClass.ScheduleList): relationalStore.ValuesBucket {
   return {
-    list_sn: scheduleList.listSn,
     list_name: scheduleList.listName,
   };
 }
 
 function tagToValuesBucket(tag: scheduleClass.Tag): relationalStore.ValuesBucket {
   return {
-    tag_sn: tag.tagSn,
     tag_name: tag.tagName,
   };
 }
