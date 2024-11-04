@@ -3,6 +3,7 @@ import * as dbConstant from './constant'
 import {common} from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import * as scheduleClass from '../packages/schedule/schedule'
+import { Schedule } from '../packages/schedule/schedule';
 
 // --------------将对象转为valueBucket---------------------
 function scheduleToValuesBucket(schedule:scheduleClass.Schedule): relationalStore.ValuesBucket {
@@ -167,11 +168,64 @@ export class DataBase{
     }
   }
 
+  // 查询所有日程
+  async queryScheduleAll(): Promise<Schedule[]> {
+    let schedules: Schedule[] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return schedules;
+    }
+
+    const predicates = new relationalStore.RdbPredicates("schedule");
+
+    // 将查询操作包装为一个 Promise
+    return new Promise<Schedule[]>((resolve, reject) => {
+      this.db!.query(predicates, (err, resultSet) => {
+        if (err) {
+          console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
+          reject(err); // 在查询失败时拒绝 Promise
+          return;
+        }
+
+        console.info(`查询结果列数：${resultSet.columnCount}`);
+        let testCnt = 0;
+
+        console.info(resultSet.rowCount.toString());
+
+        // 遍历查询结果集并填充到 schedules 数组中
+        while (resultSet.goToNextRow()) {
+          console.info('第' + testCnt + '项日程');
+          testCnt++;
+
+          const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
+          const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
+          const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+          console.info(resultSet.getString(resultSet.getColumnIndex("start_time")))
+          const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+          console.info(resultSet.getString(resultSet.getColumnIndex("end_time")))
+          const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
+          const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
+          const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
+          const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
+
+          schedules.push(new Schedule(
+            content, name, circular, prior, status, startTime, endTime, parent
+          ));
+        }
+
+        resultSet.close(); // 释放内存
+        resolve(schedules); // 在查询完成后解析 Promise
+      });
+    });
+  }
+
+
   // 查询日程
-  async queryScheduleBySn(scheduleSn: number): Promise<void> {
+  async queryScheduleBySn(scheduleSn: number): Promise<Schedule[]> {
+    let schedules:Schedule[] = []
     if (this.db === null) {
       console.error("数据库未初始化");
-      return;
+      return schedules;
     }
     const predicates = new relationalStore.RdbPredicates("schedule");
     predicates.equalTo("schedule_sn", scheduleSn);
@@ -179,21 +233,34 @@ export class DataBase{
     this.db.query(predicates, (err, resultSet) => {
       if (err) {
         console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
-        return;
       }
 
       console.info(`查询结果列数：${resultSet.columnCount}`);
-      while (resultSet.goToNextRow()) {
-        const id = resultSet.getLong(resultSet.getColumnIndex("schedule_sn"));
-        const name = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
-        const startTime = resultSet.getString(resultSet.getColumnIndex("start_time"));
-        const endTime = resultSet.getString(resultSet.getColumnIndex("end_time"));
-        const status = resultSet.getLong(resultSet.getColumnIndex("status"));
+      console.info('第' + 0 + '项日程')
 
-        console.info(`ID=${id}, 名称=${name}, 开始时间=${startTime}, 结束时间=${endTime}, 状态=${status}`);
+      let testCnt = 0;
+
+      while (resultSet.goToNextRow()){
+        console.info('第' + testCnt + '项日程')
+        testCnt++;
+        const content :string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
+        const name:string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
+        const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+        console.info(resultSet.getString(resultSet.getColumnIndex("start_time")))
+        const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+        console.info(resultSet.getString(resultSet.getColumnIndex("end_time")))
+        const circular:number = resultSet.getLong(resultSet.getColumnIndex("circular"));
+        const prior:number = resultSet.getLong(resultSet.getColumnIndex("prior"))
+        const status:boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
+        const parent:number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
+        schedules.push(new Schedule(
+          content,name,circular,prior,status,startTime,endTime,parent
+        ))
+        resultSet.close(); // 释放内存
       }
-      resultSet.close(); // 释放内存
     });
+    console.info('有' + schedules.length.toString())
+    return schedules;
   }
   //------------------------关于日程列表的访问----------------------------
 

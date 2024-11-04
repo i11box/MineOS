@@ -15,20 +15,7 @@ interface task {
 struct SchedulePage {
   // 页面导航栈，用于管理页面堆栈
   @Provide('pageInfos') pageInfos: NavPathStack = new NavPathStack();
-  @State arr: task[] = [
-    {
-      name: '跳绳',
-      begin: '2024-10-22',
-      end: '2024-10-30',
-      isCompleted: false,
-    },
-    {
-      name: '跑步',
-      begin: '2024-10-22',
-      end: '2024-10-30',
-      isCompleted: true,
-    }
-  ];
+  @State arr: Schedule.Schedule[] = []
 
   @State private isAddScheduleShow:boolean = false;
 
@@ -48,7 +35,7 @@ struct SchedulePage {
   @State private endTimeSelected:Date = this.currentDate;
   //----------------------------------------
 
-  // 用于根据导航名称显示不同的页面内容
+  //-------------子页面-----------------------
   @Builder PageMap(name: string, param?: Object) {
     if (name === "TaskDetails") {
       this.taskDetailPage();
@@ -57,6 +44,7 @@ struct SchedulePage {
     }
   }
 
+  //-------------标题栏-----------------------
   @Builder NavigationTitle() {
     Column() {
       Text('日程规划')
@@ -69,6 +57,7 @@ struct SchedulePage {
     }.alignItems(HorizontalAlign.Start)
   }
 
+  //-------------右上角工具栏-----------------------
   @Builder NavigationMenus() {
     Row() {
       Image($r('app.media.ic_public_add'))
@@ -87,6 +76,7 @@ struct SchedulePage {
     }.margin({ right:20,top:15 })
   }
 
+  //-------------添加日程页面-----------------------
   @Builder AddSchedulePage() {
     Column() {
       // 标题
@@ -231,9 +221,17 @@ struct SchedulePage {
           let context = this.getUIContext().getHostContext()
           if(context)
             DataBase.DataBaseHelper.dbExecute(context,(db)=>{
-              let newSchedule = new Schedule.Schedule(this.content,this.name,this.circular,this.prior,false,this.startTime,this.endTime);
+              let newSchedule = new Schedule.Schedule(
+                this.content,
+                this.name,
+                this.circular,
+                this.prior,
+                false,
+                this.startTime,
+                this.endTime);
               db.addSchedule(newSchedule)
             })
+          this.flushSchedules();
           this.isAddScheduleShow = false;
         });
     }
@@ -241,7 +239,7 @@ struct SchedulePage {
     .backgroundColor(Color.White);
   }
 
-  // 主任务列表页面
+  //-------------主任务列表页面---------------------
   @Builder
   taskListPage() {
     Column() {
@@ -273,7 +271,7 @@ struct SchedulePage {
       }.alignItems(HorizontalAlign.Start)
 
       List({ space: 10 }) {
-        ForEach(this.arr, (item: task, index: number) => {
+        ForEach(this.arr, (item: Schedule.Schedule, index: number) => {
           ListItem() {
             Row() {
               Image($r('app.media.ic_gallery_material_select_checkbo'))
@@ -292,11 +290,11 @@ struct SchedulePage {
                 }
 
                 Column() {
-                  Text('开始时间：'+ item.begin)
+                  Text('开始时间：'+ item.startTime)
                     .fontSize(13)
                     .opacity(0.6);
 
-                  Text('结束时间：'+ item.end)
+                  Text('结束时间：'+ item.endTime)
                     .fontSize(13)
                     .opacity(0.6);
                 }
@@ -326,7 +324,7 @@ struct SchedulePage {
     };
   }
 
-  // 任务详情页面
+  //-------------任务详情页面-----------------------
   @Builder
   taskDetailPage() {
     Column() {
@@ -342,6 +340,7 @@ struct SchedulePage {
     }
   }
 
+  //-------------构建-----------------------
   build() {
     Column() {
       Navigation(this.pageInfos) {
@@ -367,11 +366,29 @@ struct SchedulePage {
 
   // 切换任务完成状态
   toggleComplete(index: number) {
-    this.arr[index].isCompleted = !this.arr[index].isCompleted;
+
   }
 
   // 删除任务
   deleteTask(index: number) {
     this.arr.splice(index, 1);
+  }
+
+  flushSchedules(){
+    let context = this.getUIContext().getHostContext();
+    if (context) {
+      DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        try {
+          const data = await db.queryScheduleAll();
+          this.arr = data; // 赋值操作
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+  }
+
+  aboutToAppear(): void {
+    this.flushSchedules()
   }
 }
