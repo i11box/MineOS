@@ -402,6 +402,7 @@ struct SchedulePage {
           .width('337')
       }.alignItems(HorizontalAlign.Start)
 
+      // TODO:不知道能不能滚动
       List({ space: 10 }) {
         ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
           ListItem() {
@@ -502,13 +503,15 @@ struct SchedulePage {
     if(context){
       if(status){
         this.arrDone[index].status = !this.arrDone[index].status
-        DataBase.DataBaseHelper.dbExecute(context,(db)=>{
-          db.updateSchedule(this.arrDone[index].scheduleSn,this.arrDone[index])
+        DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
+          await db.updateSchedule(this.arrDone[index].scheduleSn,this.arrDone[index])
+          this.flushSchedules()
         })
       }else{
         this.arrNotDone[index].status = !this.arrNotDone[index].status
-        DataBase.DataBaseHelper.dbExecute(context,(db)=> {
-          db.updateSchedule(this.arrNotDone[index].scheduleSn, this.arrNotDone[index])
+        DataBase.DataBaseHelper.dbExecute(context,async (db)=> {
+          await db.updateSchedule(this.arrNotDone[index].scheduleSn, this.arrNotDone[index])
+          this.flushSchedules()
         })
       }
     }
