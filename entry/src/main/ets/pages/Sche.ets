@@ -16,8 +16,11 @@ struct SchedulePage {
   // 页面导航栈，用于管理页面堆栈
   @Provide('pageInfos') pageInfos: NavPathStack = new NavPathStack();
   @State arr: Schedule.Schedule[] = []
+  @State arrDone:Schedule.Schedule[] = []
+  @State arrNotDone:Schedule.Schedule[] = []
 
   @State private isAddScheduleShow:boolean = false;
+  @State private isAddSubScheduleShow:boolean = false;
 
   //------------添加日程页所用变量--------------
   private circularUnit:string [] = ['年','月','日'];
@@ -66,7 +69,7 @@ struct SchedulePage {
         .onClick(()=>{
           this.isAddScheduleShow = true;
         })
-        .bindSheet($$this.isAddScheduleShow, this.AddSchedulePage(), {
+        .bindSheet($$this.isAddScheduleShow, this.AddSchedulePage('添加新日程'), {
           height: 600
         })
       Image($r('app.media.ic_public_settings'))
@@ -76,11 +79,77 @@ struct SchedulePage {
     }.margin({ right:20,top:15 })
   }
 
+  //----------侧滑项----------------------------
+  @Builder itemEnd(index: number,isNeedSubSchedule:boolean) {
+    Row(){
+      // 构建尾端滑出组件
+      Button({ type: ButtonType.Circle }) {
+        Image($r('app.media.ic_public_delete'))
+          .width(20)
+          .height(20)
+      }
+      .onClick(() => {
+        // 建议使用this.getUIContext().showAlertDialog()
+        AlertDialog.show(
+          {
+            title: '是否删除该日程？',
+            message: '该操作无法撤回',
+            autoCancel: true,
+            alignment: DialogAlignment.Default,
+            gridCount: 4,
+            offset: { dx: 0, dy: -20 },
+            primaryButton: {
+              value: '取消',
+              action: () => {
+                console.info('Callback when the first button is clicked')
+              }
+            },
+            secondaryButton: {
+              enabled: true,
+              defaultFocus: true,
+              style: DialogButtonStyle.HIGHLIGHT,
+              value: '删除',
+              action: () => {
+                console.info('Callback when the second button is clicked')
+                let context = this.getUIContext().getHostContext()
+                if(context)
+                  DataBase.DataBaseHelper.dbExecute(context,(db)=>{
+                    db.deleteSchedule(this.arr[index].scheduleSn); //TODO:要考虑关联表
+                    if(isNeedSubSchedule)
+                      this.arrDone.splice(index,1); // 视图上删除
+                    else
+                      this.arrNotDone.splice(index,1)
+                  })
+              }
+            },
+            cancel: () => {
+              console.info('Closed callbacks')
+            }
+          }
+        )
+      })
+      // 添加子日程
+      if(isNeedSubSchedule){
+        Button({ type: ButtonType.Circle }) {
+          Image($r('app.media.ic_public_add'))
+            .width(20)
+            .height(20)
+        }
+        .onClick(()=>{
+          this.isAddScheduleShow = true;
+        })
+        .bindSheet($$this.isAddSubScheduleShow, this.AddSchedulePage('添加子日程',this.arr[index].scheduleSn), {
+          height: 600
+        })
+      }
+    }
+  }
+
   //-------------添加日程页面-----------------------
-  @Builder AddSchedulePage() {
+  @Builder AddSchedulePage(pageTitle:string,parentSn:number =-1) {
     Column() {
       // 标题
-      Text('添加新任务').fontSize(20).fontWeight(600).margin({ bottom: 20 });
+      Text(pageTitle).fontSize(20).fontWeight(600).margin({ bottom: 20 });
 
       // 输入任务名
       Column(){
@@ -222,13 +291,16 @@ struct SchedulePage {
           if(context)
             DataBase.DataBaseHelper.dbExecute(context,(db)=>{
               let newSchedule = new Schedule.Schedule(
+                0,  // 随便设一个id，数据库插入时会重新设置
                 this.content,
                 this.name,
                 this.circular,
                 this.prior,
                 false,
                 this.startTime,
-                this.endTime);
+                this.endTime,
+                parentSn
+              );
               db.addSchedule(newSchedule)
             })
           this.flushSchedules();
@@ -271,14 +343,14 @@ struct SchedulePage {
       }.alignItems(HorizontalAlign.Start)
 
       List({ space: 10 }) {
-        ForEach(this.arr, (item: Schedule.Schedule, index: number) => {
+        ForEach(this.arrNotDone, (item: Schedule.Schedule, index: number) => {
           ListItem() {
             Row() {
               Image($r('app.media.ic_gallery_material_select_checkbo'))
                 .width(24)
                 .height(24)
                 .margin({right:10})
-                .onClick(() => { this.toggleComplete(index) });
+                .onClick(() => { this.toggleComplete(index,false) });
 
               Row() {
                 Column(){
@@ -307,6 +379,12 @@ struct SchedulePage {
           .margin({left:12})
           .width('100%')
           .backgroundColor(Color.White)
+          .swipeAction({
+            end: {
+              // index为该ListItem在List中的索引值。
+              builder: () => { this.itemEnd(index,true) },
+            }
+          })
           .padding(5);
         });
       }.width('100%');
@@ -321,6 +399,53 @@ struct SchedulePage {
           .fontWeight(600)
           .width('337')
       }.alignItems(HorizontalAlign.Start)
+
+      List({ space: 10 }) {
+        ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
+          ListItem() {
+            Row() {
+              Image($r('app.media.ic_gallery_material_select_checkbo'))
+                .width(24)
+                .height(24)
+                .margin({right:10})
+                .onClick(() => { this.toggleComplete(index,true) });
+
+              Row() {
+                Column(){
+                  Text(item.name)
+                    .fontSize(18)
+                    .fontWeight(400)
+                    .baselineOffset(-5)
+                    .margin({ bottom: 5 });
+                }
+
+                Column() {
+                  Text('开始时间：'+ item.startTime)
+                    .fontSize(13)
+                    .opacity(0.6);
+
+                  Text('结束时间：'+ item.endTime)
+                    .fontSize(13)
+                    .opacity(0.6);
+                }
+                .width('100%');
+              }
+              .onClick(() => this.pageInfos.pushPath({ name: "TaskDetails", param: item}));
+            }
+            .width('100%');
+          }
+          .margin({left:12})
+          .width('100%')
+          .backgroundColor(Color.White)
+          .swipeAction({
+            end: {
+              // index为该ListItem在List中的索引值。
+              builder: () => { this.itemEnd(index,false) },
+            }
+          })
+          .padding(5);
+        });
+      }.width('100%');
     };
   }
 
@@ -365,13 +490,21 @@ struct SchedulePage {
   }
 
   // 切换任务完成状态
-  toggleComplete(index: number) {
-
-  }
-
-  // 删除任务
-  deleteTask(index: number) {
-    this.arr.splice(index, 1);
+  toggleComplete(index: number,status:boolean) {
+    let context = this.getUIContext().getHostContext();
+    if(context){
+      if(status){
+        this.arrDone[index].status = !this.arrDone[index].status
+        DataBase.DataBaseHelper.dbExecute(context,(db)=>{
+          db.updateSchedule(this.arrDone[index].scheduleSn,this.arrDone[index])
+        })
+      }else{
+        this.arrNotDone[index].status = !this.arrNotDone[index].status
+        DataBase.DataBaseHelper.dbExecute(context,(db)=> {
+          db.updateSchedule(this.arrNotDone[index].scheduleSn, this.arrNotDone[index])
+        })
+      }
+    }
   }
 
   flushSchedules(){
@@ -379,8 +512,10 @@ struct SchedulePage {
     if (context) {
       DataBase.DataBaseHelper.dbExecute(context, async (db) => {
         try {
-          const data = await db.queryScheduleAll();
+          const data = await db.queryScheduleIsParent();
           this.arr = data; // 赋值操作
+          this.arrDone = this.arr.filter(item => item.status);
+          this.arrNotDone = this.arr.filter(item => !item.status);
         } catch (err) {
           console.error(err);
         }

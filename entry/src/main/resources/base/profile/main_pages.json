@@ -2,7 +2,6 @@
   "src": [
     "pages/Index",
     "pages/Welcome",
-    "pages/Sche",
-    "pages/test"
+    "pages/Sche"
   ]
 }

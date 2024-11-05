@@ -188,28 +188,22 @@ export class DataBase{
         }
 
         console.info(`查询结果列数：${resultSet.columnCount}`);
-        let testCnt = 0;
-
         console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
-          console.info('第' + testCnt + '项日程');
-          testCnt++;
-
+          const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
           const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
           const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
           const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
-          console.info(resultSet.getString(resultSet.getColumnIndex("start_time")))
           const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
-          console.info(resultSet.getString(resultSet.getColumnIndex("end_time")))
           const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
           const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
           const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
           const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
 
           schedules.push(new Schedule(
-            content, name, circular, prior, status, startTime, endTime, parent
+            sn,content, name, circular, prior, status, startTime, endTime, parent
           ));
         }
 
@@ -219,6 +213,51 @@ export class DataBase{
     });
   }
 
+  // 查询所有日程
+  async queryScheduleIsParent(): Promise<Schedule[]> {
+    let schedules: Schedule[] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return schedules;
+    }
+
+    const predicates = new relationalStore.RdbPredicates("schedule");
+    predicates.equalTo('parent_schedule_sn',-1);
+
+    // 将查询操作包装为一个 Promise
+    return new Promise<Schedule[]>((resolve, reject) => {
+      this.db!.query(predicates, (err, resultSet) => {
+        if (err) {
+          console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
+          reject(err); // 在查询失败时拒绝 Promise
+          return;
+        }
+
+        console.info(`查询结果列数：${resultSet.columnCount}`);
+        console.info(resultSet.rowCount.toString());
+
+        // 遍历查询结果集并填充到 schedules 数组中
+        while (resultSet.goToNextRow()) {
+          const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+          const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
+          const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
+          const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+          const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+          const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
+          const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
+          const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
+          const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
+
+          schedules.push(new Schedule(
+            sn,content, name, circular, prior, status, startTime, endTime, parent
+          ));
+        }
+
+        resultSet.close(); // 释放内存
+        resolve(schedules); // 在查询完成后解析 Promise
+      });
+    });
+  }
 
   // 查询日程
   async queryScheduleBySn(scheduleSn: number): Promise<Schedule[]> {
@@ -241,20 +280,17 @@ export class DataBase{
       let testCnt = 0;
 
       while (resultSet.goToNextRow()){
-        console.info('第' + testCnt + '项日程')
-        testCnt++;
+        const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
         const content :string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
         const name:string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
         const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
-        console.info(resultSet.getString(resultSet.getColumnIndex("start_time")))
         const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
-        console.info(resultSet.getString(resultSet.getColumnIndex("end_time")))
         const circular:number = resultSet.getLong(resultSet.getColumnIndex("circular"));
         const prior:number = resultSet.getLong(resultSet.getColumnIndex("prior"))
         const status:boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
         const parent:number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
         schedules.push(new Schedule(
-          content,name,circular,prior,status,startTime,endTime,parent
+          sn,content,name,circular,prior,status,startTime,endTime,parent
         ))
         resultSet.close(); // 释放内存
       }
