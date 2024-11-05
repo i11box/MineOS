@@ -109,12 +109,12 @@ struct SchedulePage {
                 if(context)
                   DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
                     if(isNeedSubSchedule){
-                      this.arrNotDone.splice(index,1); // 视图上删除
                       await db.deleteSchedule(this.arrNotDone[index].scheduleSn); //TODO:要考虑关联表
+                      this.arrNotDone.splice(index,1); // 视图上删除
                     }
                     else{
-                      this.arrDone.splice(index,1)
                       await db.deleteSchedule(this.arrDone[index].scheduleSn); //TODO:要考虑关联表
+                      this.arrDone.splice(index,1);
                     }
                   })
               }
@@ -283,10 +283,10 @@ struct SchedulePage {
         .width('80%')
         .height(40)
         .backgroundColor('#4CAF50')
-        .onClick(() => {
+        .onClick(async () => {
           let context = this.getUIContext().getHostContext()
           if(context)
-            DataBase.DataBaseHelper.dbExecute(context,(db)=>{
+            await DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
               let newSchedule = new Schedule.Schedule(
                 0,  // 随便设一个id，数据库插入时会重新设置
                 this.content,
@@ -298,11 +298,11 @@ struct SchedulePage {
                 this.endTime,
                 parentSn
               );
-              db.addSchedule(newSchedule)
+              await db.addSchedule(newSchedule)
+              this.flushSchedules();
+              this.isAddScheduleShow = false;
+              this.isAddSubScheduleShow = false;
             })
-          this.flushSchedules();
-          this.isAddScheduleShow = false;
-          this.isAddSubScheduleShow = false;
         });
     }
     .padding(20)
@@ -330,6 +330,10 @@ struct SchedulePage {
       }
       .width("100%")
       .margin({ top: 10, left: 20, right: 20, bottom:15 });
+
+      List(){
+
+      }
 
       // 待完成任务列表
       Column() {
