@@ -1,14 +1,6 @@
-// 定义任务接口
 import { LengthMetrics, SymbolGlyphModifier } from '@kit.ArkUI';
 import * as DataBase from '../data/entity';
 import * as Schedule from '../packages/schedule/schedule';
-
-interface task {
-  name: string;
-  begin: string;
-  end: string;
-  isCompleted: boolean;
-}
 
 @Entry
 @Component
@@ -23,10 +15,10 @@ struct SchedulePage {
   @State private isAddSubScheduleShow:boolean = false;
 
   //------------添加日程页所用变量--------------
-  private circularUnit:string [] = ['年','月','日'];
+  private circularUnit:string [] = ['年','月','日','无周期'];
   private currentDate:Date = new Date();
-  private circularUnitNum:number [] = [365,30,1];
-  private circularUnitSelected:number = 2;
+  private circularUnitNum:number [] = [365,30,1,0];
+  private circularUnitSelected:number = 3;
 
   @State content:string = '';
   @State name:string = '';
@@ -70,7 +62,8 @@ struct SchedulePage {
           this.isAddScheduleShow = true;
         })
         .bindSheet($$this.isAddScheduleShow, this.AddSchedulePage('添加新日程'), {
-          height: 600
+          height: 600,
+          onWillDisappear:()=>{this.isAddScheduleShow = false;}
         })
       Image($r('app.media.ic_public_settings'))
         .width(24)
@@ -81,6 +74,7 @@ struct SchedulePage {
 
   //----------侧滑项----------------------------
   @Builder itemEnd(index: number,isNeedSubSchedule:boolean) {
+
     Row(){
       // 构建尾端滑出组件
       Button({ type: ButtonType.Circle }) {
@@ -113,12 +107,15 @@ struct SchedulePage {
                 console.info('Callback when the second button is clicked')
                 let context = this.getUIContext().getHostContext()
                 if(context)
-                  DataBase.DataBaseHelper.dbExecute(context,(db)=>{
-                    db.deleteSchedule(this.arr[index].scheduleSn); //TODO:要考虑关联表
-                    if(isNeedSubSchedule)
-                      this.arrDone.splice(index,1); // 视图上删除
-                    else
-                      this.arrNotDone.splice(index,1)
+                  DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
+                    if(isNeedSubSchedule){
+                      this.arrNotDone.splice(index,1); // 视图上删除
+                      await db.deleteSchedule(this.arrNotDone[index].scheduleSn); //TODO:要考虑关联表
+                    }
+                    else{
+                      this.arrDone.splice(index,1)
+                      await db.deleteSchedule(this.arrDone[index].scheduleSn); //TODO:要考虑关联表
+                    }
                   })
               }
             },
@@ -134,13 +131,14 @@ struct SchedulePage {
           Image($r('app.media.ic_public_add'))
             .width(20)
             .height(20)
+            .onClick(()=>{
+              this.isAddSubScheduleShow = true;
+            })
+            .bindSheet($$this.isAddSubScheduleShow, this.AddSchedulePage('添加子日程',this.arrNotDone[index].scheduleSn), {
+              height: 600,
+              onWillDisappear:()=>{this.isAddSubScheduleShow = false;}
+            })
         }
-        .onClick(()=>{
-          this.isAddScheduleShow = true;
-        })
-        .bindSheet($$this.isAddSubScheduleShow, this.AddSchedulePage('添加子日程',this.arr[index].scheduleSn), {
-          height: 600
-        })
       }
     }
   }
@@ -150,7 +148,6 @@ struct SchedulePage {
     Column() {
       // 标题
       Text(pageTitle).fontSize(20).fontWeight(600).margin({ bottom: 20 });
-
       // 输入任务名
       Column(){
         Text('任务名称').margin({left:5,bottom:10})
@@ -238,7 +235,7 @@ struct SchedulePage {
               textStyle: {color: '#468CED', font: {size: '18fp', weight: FontWeight.Normal}},
               selectedTextStyle: {color: '#468CED', font: {size: '18fp', weight: FontWeight.Bold}},
               onDateAccept: (value: Date) => {
-                if(value>=this.startTime){
+                if(value<=this.startTime){
                   this.endTimeSelected = value
                   this.endTime = value
                 }else{
@@ -305,6 +302,7 @@ struct SchedulePage {
             })
           this.flushSchedules();
           this.isAddScheduleShow = false;
+          this.isAddSubScheduleShow = false;
         });
     }
     .padding(20)
@@ -466,6 +464,7 @@ struct SchedulePage {
   }
 
   //-------------构建-----------------------
+
   build() {
     Column() {
       Navigation(this.pageInfos) {
@@ -489,7 +488,11 @@ struct SchedulePage {
     .height('100%');
   }
 
-  // 切换任务完成状态
+  /**
+   * 切换任务完成状态
+   * @param index
+   * @param status
+   */
   toggleComplete(index: number,status:boolean) {
     let context = this.getUIContext().getHostContext();
     if(context){
@@ -507,6 +510,9 @@ struct SchedulePage {
     }
   }
 
+  /**
+   * 获取所有日程
+   */
   flushSchedules(){
     let context = this.getUIContext().getHostContext();
     if (context) {
@@ -516,11 +522,21 @@ struct SchedulePage {
           this.arr = data; // 赋值操作
           this.arrDone = this.arr.filter(item => item.status);
           this.arrNotDone = this.arr.filter(item => !item.status);
+          this.reRenderSchedules()
         } catch (err) {
           console.error(err);
         }
       });
     }
+    console.info('获取一次日程')
+  }
+
+  reRenderSchedules(){
+    // 重绘
+    this.arrDone.splice(0,0,new Schedule.Schedule());
+    this.arrDone.splice(0,1);
+    this.arrNotDone.splice(0,0,new Schedule.Schedule());
+    this.arrNotDone.splice(0,1);
   }
 
   aboutToAppear(): void {

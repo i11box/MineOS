@@ -152,6 +152,10 @@ export class DataBase{
   }
 
   // 删除日程
+  /**
+   *
+   * @param scheduleID
+   */
   async deleteSchedule(scheduleID: number): Promise<void> {
     if (this.db === null) {
       console.error("数据库未初始化");
@@ -160,6 +164,12 @@ export class DataBase{
     try {
       const predicates = new relationalStore.RdbPredicates("schedule");
       predicates.equalTo("schedule_sn", scheduleID); // 通过 ID 查找日程
+
+      // 调试语句
+      let schedule= await this.queryScheduleBySn(scheduleID)
+      for(const i of schedule){
+        console.info(i.name)
+      }
 
       const rowsDeleted = await this.db.delete(predicates);
       console.info(`删除成功，删除的行数：${rowsDeleted}`);
@@ -214,6 +224,7 @@ export class DataBase{
   }
 
   // 查询所有日程
+
   async queryScheduleIsParent(): Promise<Schedule[]> {
     let schedules: Schedule[] = [];
     if (!this.db) {
@@ -275,9 +286,6 @@ export class DataBase{
       }
 
       console.info(`查询结果列数：${resultSet.columnCount}`);
-      console.info('第' + 0 + '项日程')
-
-      let testCnt = 0;
 
       while (resultSet.goToNextRow()){
         const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));

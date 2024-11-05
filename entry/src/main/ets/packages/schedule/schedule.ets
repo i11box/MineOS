@@ -22,6 +22,7 @@ export class Tag {
 }
 
 // 日程类
+@ObservedV2
 export class Schedule {
   scheduleSn:number;  // 编号
   content: string;    // 内容
@@ -30,13 +31,13 @@ export class Schedule {
   endTime: Date | null;    // 结束时间
   circular: number;       // 周期
   prior: number;           // 优先级
-  status: boolean;          // 完成状态
+  @Trace status: boolean;          // 完成状态
   parent: number=-1;  // 父日程可以为 null
 
   constructor(
-    scheduleSn:number,
-    content: string,
-    name:string,
+    scheduleSn:number = -1,
+    content: string = '',
+    name:string = '',
     circular: number = 0,
     prior: number = 0,
     status: boolean = false,
