@@ -1,5 +1,6 @@
 import * as DataBase from '../data/entity';
 import { Schedule } from "../packages/schedule/schedule"
+import { Callback } from '@ohos.base';
 
 @Builder
 export function TaskDetailsBuilder(param: Object) {
@@ -188,7 +189,7 @@ struct TaskDetails {
         });
     }
     .padding(20)
-    .backgroundColor(Color.White);
+    .backgroundColor(Color.White)
   }
 
   //-------------右上角工具栏-----------------------
@@ -202,7 +203,21 @@ struct TaskDetails {
         })
         .bindSheet($$this.isEditScheduleShow, this.EditSchedulePage(), {
           height: 600,
-          onWillDisappear:()=>{this.isEditScheduleShow = false;}
+          onWillDisappear:()=>{this.isEditScheduleShow = false},
+          onWillDismiss:((DismissSheetAction: DismissSheetAction) => {
+            DismissSheetAction.dismiss = ()=>{
+              this.name = this.param.name;
+              this.content = this.param.content;
+              this.startTime = this.param.startTime ?? new Date();
+              this.endTime = this.param.endTime ?? new Date();
+              this.circular = this.param.circular;
+              this.prior = this.param.prior;
+              this.startTimeSelected = this.startTime;
+              this.endTimeSelected = this.endTime;
+              this.isEditScheduleShow = false;
+            }
+            DismissSheetAction.dismiss()
+          })
         })
       Image($r('app.media.ic_public_delete'))
         .width(24)
@@ -236,6 +251,7 @@ struct TaskDetails {
                     DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
                       await db.deleteSchedule(this.param.scheduleSn); //TODO:要考虑关联表
                     })
+                  this.pageInfos.pop({number:1})
                 }
               },
               cancel: () => {
@@ -250,6 +266,9 @@ struct TaskDetails {
   build() {
     NavDestination(){
       Column() {
+        Row(){
+          Text(JSON.stringify(this.pageInfos))
+        }
         // 页面标题
         Row() {
           Text('任务详情').fontSize(27).margin({ left: 20 });
@@ -309,6 +328,7 @@ struct TaskDetails {
         console.log(`testTag onReady catch exception: ${JSON.stringify(e)}`)
       }
     })
+    .onWillHide(()=>{})
     .menus(this.NavigationMenus)
   }
 }

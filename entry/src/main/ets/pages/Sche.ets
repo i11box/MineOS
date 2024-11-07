@@ -36,6 +36,9 @@ struct SchedulePage {
   @State private endTimeSelected:Date = this.currentDate;
   //----------------------------------------
 
+  //-------------与页面通信的全局变量-----------
+  static isShouldFlush:boolean = false;
+
   //-------------子页面-----------------------
   @Builder PageMap(name: string, param?: Object) {
     Scroll(this.scroller){
@@ -390,7 +393,16 @@ struct SchedulePage {
                 }
                 .width('100%');
               }
-              .onClick(() => this.pageInfos.pushPath({ name: "TaskDetails", param: item}));
+              .onClick(() => {
+                console.info("pushedPath" + JSON.stringify(this.pageInfos))
+                  this.pageInfos.pushPath({
+                    name: "TaskDetails",
+                    param: item,
+                    onPop:()=> this.flushSchedules()
+                  })
+
+                }
+              )
             }
             .width('100%');
           }
@@ -448,7 +460,11 @@ struct SchedulePage {
                 }
                 .width('100%');
               }
-              .onClick(() => this.pageInfos.pushPath({ name: "TaskDetails", param: item}));
+              .onClick(() => this.pageInfos.pushPath({
+                name: "TaskDetails",
+                param: item,
+                onPop:()=> this.flushSchedules()
+              }))
             }
             .width('100%');
           }
@@ -547,7 +563,12 @@ struct SchedulePage {
     this.arrNotDone.splice(0,1);
   }
 
-  aboutToAppear(): void {
-    this.flushSchedules()
+  // aboutToAppear(): void {
+  //   this.flushSchedules()
+  // }
+
+  onPageShow(): void {
+    console.info("onPageShow!")
+    this.flushSchedules();
   }
 }
