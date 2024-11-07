@@ -10,17 +10,6 @@ export class ScheduleList {
 
 }
 
-// 标签类
-export class Tag {
-  tagSn:number;  // 编号
-  tagName: string;  // 标签名称
-
-  constructor(tagSn:number,tagName: string) {
-    this.tagSn = tagSn;
-    this.tagName = tagName;
-  }
-}
-
 // 日程类
 @ObservedV2
 export class Schedule {

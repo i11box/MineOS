@@ -25,12 +25,6 @@ function scheduleListToValuesBucket(scheduleList:scheduleClass.ScheduleList): re
   };
 }
 
-function tagToValuesBucket(tag: scheduleClass.Tag): relationalStore.ValuesBucket {
-  return {
-    tag_name: tag.tagName,
-  };
-}
-
 //-----------------数据库类-------------------------------
 
 export class DataBaseHelper {
@@ -88,12 +82,12 @@ export class DataBaseHelper {
   }
 }
 
-export class DataBase{
+export class DataBase {
   //----------------------数据库的属性-----------------------------
-  db :relationalStore.RdbStore|null = null
+  db: relationalStore.RdbStore | null = null
 
   //--------------------------关于数据库的创建-------------------------
-  constructor(rdb:relationalStore.RdbStore|null) {
+  constructor(rdb: relationalStore.RdbStore | null) {
     this.db = rdb;
   }
 
@@ -144,7 +138,8 @@ export class DataBase{
       const predicates = new relationalStore.RdbPredicates("schedule");
       predicates.equalTo("schedule_sn", scheduleID); // 通过 ID 识别日程
 
-      const rowsUpdated = await this.db.update(schedule, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
+      const rowsUpdated =
+        await this.db.update(schedule, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
       console.info(`更新成功，更新的行数：${rowsUpdated}`);
     } catch (err) {
       console.error(`更新失败，错误代码: ${err.code}，信息: ${err.message}`);
@@ -166,8 +161,8 @@ export class DataBase{
       predicates.equalTo("schedule_sn", scheduleID); // 通过 ID 查找日程
 
       // 调试语句
-      let schedule= await this.queryScheduleBySn(scheduleID)
-      for(const i of schedule){
+      let schedule = await this.queryScheduleBySn(scheduleID)
+      for (const i of schedule) {
         console.info(i.name)
       }
 
@@ -202,18 +197,18 @@ export class DataBase{
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
-          const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+          const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
           const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
           const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
-          const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
-          const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+          const startTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+          const endTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
           const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
           const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
           const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
           const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
 
           schedules.push(new Schedule(
-            sn,content, name, circular, prior, status, startTime, endTime, parent
+            sn, content, name, circular, prior, status, startTime, endTime, parent
           ));
         }
 
@@ -233,7 +228,7 @@ export class DataBase{
     }
 
     const predicates = new relationalStore.RdbPredicates("schedule");
-    predicates.equalTo('parent_schedule_sn',-1);
+    predicates.equalTo('parent_schedule_sn', -1);
 
     // 将查询操作包装为一个 Promise
     return new Promise<Schedule[]>((resolve, reject) => {
@@ -249,18 +244,18 @@ export class DataBase{
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
-          const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+          const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
           const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
           const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
-          const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
-          const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+          const startTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+          const endTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
           const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
           const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
           const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
           const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
 
           schedules.push(new Schedule(
-            sn,content, name, circular, prior, status, startTime, endTime, parent
+            sn, content, name, circular, prior, status, startTime, endTime, parent
           ));
         }
 
@@ -272,7 +267,7 @@ export class DataBase{
 
   // 查询日程
   async queryScheduleBySn(scheduleSn: number): Promise<Schedule[]> {
-    let schedules:Schedule[] = []
+    let schedules: Schedule[] = []
     if (this.db === null) {
       console.error("数据库未初始化");
       return schedules;
@@ -287,18 +282,18 @@ export class DataBase{
 
       console.info(`查询结果列数：${resultSet.columnCount}`);
 
-      while (resultSet.goToNextRow()){
-        const sn:number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
-        const content :string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
-        const name:string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
-        const startTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
-        const endTime:Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
-        const circular:number = resultSet.getLong(resultSet.getColumnIndex("circular"));
-        const prior:number = resultSet.getLong(resultSet.getColumnIndex("prior"))
-        const status:boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
-        const parent:number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
+      while (resultSet.goToNextRow()) {
+        const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+        const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
+        const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
+        const startTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+        const endTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+        const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
+        const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"))
+        const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
+        const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
         schedules.push(new Schedule(
-          sn,content,name,circular,prior,status,startTime,endTime,parent
+          sn, content, name, circular, prior, status, startTime, endTime, parent
         ))
         resultSet.close(); // 释放内存
       }
@@ -306,6 +301,7 @@ export class DataBase{
     console.info('有' + schedules.length.toString())
     return schedules;
   }
+
   //------------------------关于日程列表的访问----------------------------
 
   // 增加日程列表
@@ -334,7 +330,8 @@ export class DataBase{
       const predicates = new relationalStore.RdbPredicates("schedule_list");
       predicates.equalTo("list_sn", listID); // 通过 ID 识别日程列表
 
-      const rowsUpdated = await this.db.update(valuesBucket, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
+      const rowsUpdated =
+        await this.db.update(valuesBucket, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
       console.info(`日程列表更新成功，更新的行数：${rowsUpdated}`);
     } catch (err) {
       console.error(`日程列表更新失败，错误代码: ${err.code}，信息: ${err.message}`);
@@ -377,83 +374,6 @@ export class DataBase{
       while (resultSet.goToNextRow()) {
         const id = resultSet.getLong(resultSet.getColumnIndex("list_sn"));
         const name = resultSet.getString(resultSet.getColumnIndex("list_name"));
-
-        console.info(`ID=${id}, 名称=${name}`);
-      }
-      resultSet.close(); // 释放内存
-    });
-  }
-  //------------------------关于标签的访问----------------------------
-
-  // 增加标签
-  async addTag(tag: scheduleClass.Tag): Promise<void> {
-    const valuesBucket = tagToValuesBucket(tag);
-    if (this.db === null) {
-      console.error("数据库未初始化");
-      return;
-    }
-    try {
-      const rowId = await this.db.insert("tag", valuesBucket);
-      console.info(`标签插入成功，rowId = ${rowId}`);
-    } catch (err) {
-      console.error(`标签插入失败，错误代码: ${err.code}，信息: ${err.message}`);
-    }
-  }
-
-  // 更新标签
-  async updateTag(tagID: number, updatedTag: scheduleClass.Tag): Promise<void> {
-    const valuesBucket = tagToValuesBucket(updatedTag);
-    if (this.db === null) {
-      console.error("数据库未初始化");
-      return;
-    }
-    try {
-      const predicates = new relationalStore.RdbPredicates("tag");
-      predicates.equalTo("tag_sn", tagID); // 通过 ID 识别标签
-
-      const rowsUpdated = await this.db.update(valuesBucket, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
-      console.info(`标签更新成功，更新的行数：${rowsUpdated}`);
-    } catch (err) {
-      console.error(`标签更新失败，错误代码: ${err.code}，信息: ${err.message}`);
-    }
-  }
-
-  // 删除标签
-  async deleteTag(tagID: number): Promise<void> {
-    if (this.db === null) {
-      console.error("数据库未初始化");
-      return;
-    }
-    try {
-      const predicates = new relationalStore.RdbPredicates("tag");
-      predicates.equalTo("tag_sn", tagID); // 通过 ID 查找标签
-
-      const rowsDeleted = await this.db.delete(predicates);
-      console.info(`标签删除成功，删除的行数：${rowsDeleted}`);
-    } catch (err) {
-      console.error(`标签删除失败，错误代码: ${err.code}，信息: ${err.message}`);
-    }
-  }
-
-  // 查询标签
-  async queryTagBySn(tagSn: number): Promise<void> {
-    if (this.db === null) {
-      console.error("数据库未初始化");
-      return;
-    }
-    const predicates = new relationalStore.RdbPredicates("tag");
-    predicates.equalTo("tag_sn", tagSn);
-
-    this.db.query(predicates, (err, resultSet) => {
-      if (err) {
-        console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
-        return;
-      }
-
-      console.info(`查询结果列数：${resultSet.columnCount}`);
-      while (resultSet.goToNextRow()) {
-        const id = resultSet.getLong(resultSet.getColumnIndex("tag_sn"));
-        const name = resultSet.getString(resultSet.getColumnIndex("tag_name"));
 
         console.info(`ID=${id}, 名称=${name}`);
       }

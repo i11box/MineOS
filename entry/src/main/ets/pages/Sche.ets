@@ -13,6 +13,11 @@ struct SchedulePage {
 
   @State private isAddScheduleShow:boolean = false;
   @State private isAddSubScheduleShow:boolean = false;
+  @State private searchChangeValue:string = '';
+  @State private searchSubmitValue:string = '';
+
+  private scheduleIsWatching:Schedule.Schedule = new Schedule.Schedule();
+  private scroller:Scroller = new Scroller()
 
   //------------添加日程页所用变量--------------
   private circularUnit:string [] = ['年','月','日','无周期'];
@@ -32,11 +37,14 @@ struct SchedulePage {
 
   //-------------子页面-----------------------
   @Builder PageMap(name: string, param?: Object) {
-    if (name === "TaskDetails") {
-      this.taskDetailPage();
-    } else {
-      this.taskListPage();
-    }
+    Scroll(this.scroller){
+      if (name === "TaskDetails") {
+        this.taskDetailPage();
+      } else {
+        this.taskListPage();
+      }
+    }.scrollBar(BarState.On)
+    .scrollBarColor(Color.Gray)
   }
 
   //-------------标题栏-----------------------
@@ -321,19 +329,26 @@ struct SchedulePage {
 
       // 搜索框
       Row() {
-        TextInput({ placeholder: '搜索任务' })
+        Search({value:this.searchChangeValue,
+                placeholder:'搜索日程'
+        })
           .width("90%")
           .height(40)
           .borderRadius(8)
           .margin({left:20})
-          .borderStyle(BorderStyle.Solid);
+          .borderStyle(BorderStyle.Solid)
+          .onChange((value:string)=>{
+            this.searchChangeValue = value;
+            if(value === '')
+              this.flushSchedules();
+          })
+          .onSubmit((value:string)=>{
+            this.searchSubmitValue = value;
+            this.flushSchedules();
+          })
       }
       .width("100%")
       .margin({ top: 10, left: 20, right: 20, bottom:15 });
-
-      List(){
-
-      }
 
       // 待完成任务列表
       Column() {
@@ -402,7 +417,6 @@ struct SchedulePage {
           .width('337')
       }.alignItems(HorizontalAlign.Start)
 
-      // TODO:不知道能不能滚动
       List({ space: 10 }) {
         ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
           ListItem() {
@@ -448,8 +462,8 @@ struct SchedulePage {
           })
           .padding(5);
         });
-      }.width('100%');
-    };
+      }.width('100%')
+    }
   }
 
   //-------------任务详情页面-----------------------
@@ -475,7 +489,9 @@ struct SchedulePage {
       Navigation(this.pageInfos) {
         Column(){Blank().margin({bottom:20})}
         // 主任务列表页面的内容
-        this.taskListPage();
+        Scroll(this.scroller){
+          this.taskListPage();
+        }
       }
       .hideBackButton(false)
       .title('日程管理', {
@@ -527,8 +543,8 @@ struct SchedulePage {
         try {
           const data = await db.queryScheduleIsParent();
           this.arr = data; // 赋值操作
-          this.arrDone = this.arr.filter(item => item.status);
-          this.arrNotDone = this.arr.filter(item => !item.status);
+          this.arrDone = this.arr.filter(item => item.status && item.name.includes(this.searchChangeValue));
+          this.arrNotDone = this.arr.filter(item => !item.status && item.name.includes(this.searchChangeValue));
           this.reRenderSchedules()
         } catch (err) {
           console.error(err);

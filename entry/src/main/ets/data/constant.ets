@@ -44,29 +44,19 @@ export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
   );
 `;
 
-// Schedule_Tag 关联表定义
-export const GET_TABLE_SCHEDULE_TAG = `
-  CREATE TABLE IF NOT EXISTS schedule_tag (
+// ScheduleList_Schedule 关联表定义
+export const GET_TABLE_VIEW = `
+  CREATE TABLE IF NOT EXISTS view (
+    view_sn INTEGER NOT NULL,
+    days INTEGER,
     schedule_sn INTEGER NOT NULL,
-    tag_sn INTEGER NOT NULL,
     FOREIGN KEY(schedule_sn) REFERENCES schedule(schedule_sn),
-    FOREIGN KEY(tag_sn) REFERENCES tag(tag_sn),
-    UNIQUE(schedule_sn, tag_sn)
-  );
-`;
-
-// Tag 表定义
-export const GET_TABLE_TAG = `
-  CREATE TABLE IF NOT EXISTS tag (
-      tag_sn INTEGER PRIMARY KEY,
-      tag_name TEXT NOT NULL
   );
 `;
 
 export const GET_TABLE:string[] = [
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
-  GET_TABLE_TAG,
   GET_TABLE_SCHEDULE_LIST_SCHEDULE,
-  GET_TABLE_SCHEDULE_TAG
+  GET_TABLE_VIEW
 ]
