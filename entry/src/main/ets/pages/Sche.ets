@@ -1,13 +1,62 @@
+import { router } from '@kit.ArkUI';
 import { LengthMetrics, SymbolGlyphModifier } from '@kit.ArkUI';
 import * as DataBase from '../data/entity';
 import * as Schedule from '../packages/schedule/schedule';
 import {TaskDetailsBuilder} from './TaskDetails'
+
+@Builder
+export function TaskListBuilder() {
+  taskListPage()
+}
 
 @Entry
 @Component
 struct SchedulePage {
   // 页面导航栈，用于管理页面堆栈
   @Provide('pageInfos') pageInfos: NavPathStack = new NavPathStack();
+  private scroller:Scroller = new Scroller()
+  //-------------构建-----------------------
+
+  //-------------子页面-----------------------
+  @Builder PageMap(name: string, param?: Object) {
+    Scroll(this.scroller){
+      if (name === "TaskDetails" && param) {
+        TaskDetailsBuilder(param)
+      } else {
+        taskListPage()
+      }
+    }.scrollBar(BarState.On)
+    .scrollBarColor(Color.Gray)
+  }
+
+  build() {
+    Navigation(this.pageInfos) {
+      Column(){Blank().margin({bottom:20})}
+    }
+    .hideBackButton(false)
+    .title('日程管理', {
+      paddingStart: LengthMetrics.vp(16),
+      paddingEnd: LengthMetrics.vp(32),
+    })
+    .titleMode(NavigationTitleMode.Mini)
+    .mode(NavigationMode.Stack) // 分栏模式，可以改为堆栈模式 (Stack) 以适应页面需求
+    .navDestination(this.PageMap) // 使用 PageMap 控制页面内容
+    .titleMode(NavigationTitleMode.Mini)
+    .width('100%')
+    .height('100%');
+  }
+
+  aboutToAppear(): void {
+    this.pageInfos.pushPath({name:"TaskList"});
+  }
+
+}
+
+//-------------主任务列表页面---------------------
+@Component
+struct taskListPage {
+
+  @Consume('pageInfos') pageInfos: NavPathStack;
   @State arr: Schedule.Schedule[] = []
   @State arrDone:Schedule.Schedule[] = []
   @State arrNotDone:Schedule.Schedule[] = []
@@ -18,7 +67,6 @@ struct SchedulePage {
   @State private searchSubmitValue:string = '';
 
   private scheduleIsWatching:Schedule.Schedule = new Schedule.Schedule();
-  private scroller:Scroller = new Scroller()
 
   //------------添加日程页所用变量--------------
   private circularUnit:string [] = ['年','月','日','无周期'];
@@ -38,18 +86,6 @@ struct SchedulePage {
 
   //-------------与页面通信的全局变量-----------
   static isShouldFlush:boolean = false;
-
-  //-------------子页面-----------------------
-  @Builder PageMap(name: string, param?: Object) {
-    Scroll(this.scroller){
-      if (name === "TaskDetails" && param) {
-        TaskDetailsBuilder(param)
-      } else {
-        this.taskListPage();
-      }
-    }.scrollBar(BarState.On)
-    .scrollBarColor(Color.Gray)
-  }
 
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
@@ -321,193 +357,180 @@ struct SchedulePage {
     .backgroundColor(Color.White);
   }
 
-  //-------------主任务列表页面---------------------
-  @Builder
-  taskListPage() {
-    Column() {
-      // 标题栏
-      Row() {
-        Text('日程列表').fontSize(20).margin({ left: 20 });
-        Image($r('app.media.ic_public_down_arrow')).width('8%')
-      }.width('100%');
 
-      // 搜索框
-      Row() {
-        Search({value:this.searchChangeValue,
-                placeholder:'搜索日程'
-        })
-          .width("90%")
-          .height(40)
-          .borderRadius(8)
-          .margin({left:20})
-          .borderStyle(BorderStyle.Solid)
-          .onChange((value:string)=>{
-            this.searchChangeValue = value;
-            if(value === '')
-              this.flushSchedules();
-          })
-          .onSubmit((value:string)=>{
-            this.searchSubmitValue = value;
-            this.flushSchedules();
-          })
-      }
-      .width("100%")
-      .margin({ top: 10, left: 20, right: 20, bottom:15 });
-
-      // 待完成任务列表
+  build(){
+    NavDestination(){
       Column() {
-        Text('待完成')
-          .fontSize(20)
-          .margin({ left: 15,bottom:10 })
-          .fontWeight(600)
-          .width('337')
-      }.alignItems(HorizontalAlign.Start)
+        // 标题栏
+        Row() {
+          Text('日程列表').fontSize(20).margin({ left: 20 });
+          Image($r('app.media.ic_public_down_arrow')).width('8%')
+        }.width('100%');
 
-      List({ space: 10 }) {
-        ForEach(this.arrNotDone, (item: Schedule.Schedule, index: number) => {
-          ListItem() {
-            Row() {
-              Image($r('app.media.ic_gallery_material_select_checkbo'))
-                .width(24)
-                .height(24)
-                .margin({right:10})
-                .onClick(() => { this.toggleComplete(index,false) });
+        // 搜索框
+        Row() {
+          Search({value:this.searchChangeValue,
+            placeholder:'搜索日程'
+          })
+            .width("90%")
+            .height(40)
+            .borderRadius(8)
+            .margin({left:20})
+            .borderStyle(BorderStyle.Solid)
+            .onChange((value:string)=>{
+              this.searchChangeValue = value;
+              if(value === '')
+                this.flushSchedules();
+            })
+            .onSubmit((value:string)=>{
+              this.searchSubmitValue = value;
+              this.flushSchedules();
+            })
+        }
+        .width("100%")
+        .margin({ top: 10, left: 20, right: 20, bottom:15 });
 
+        // 待完成任务列表
+        Column() {
+          Text('待完成')
+            .fontSize(20)
+            .margin({ left: 15,bottom:10 })
+            .fontWeight(600)
+            .width('337')
+        }.alignItems(HorizontalAlign.Start)
+
+        List({ space: 10 }) {
+          ForEach(this.arrNotDone, (item: Schedule.Schedule, index: number) => {
+            ListItem() {
               Row() {
-                Column(){
-                  Text(item.name)
-                    .fontSize(18)
-                    .fontWeight(400)
-                    .baselineOffset(-5)
-                    .margin({ bottom: 5 });
-                }
+                Image($r('app.media.ic_gallery_material_select_checkbo'))
+                  .width(24)
+                  .height(24)
+                  .margin({right:10})
+                  .onClick(() => { this.toggleComplete(index,false) });
 
-                Column() {
-                  Text('开始时间：'+ item.startTime)
-                    .fontSize(13)
-                    .opacity(0.6);
+                Row() {
+                  Column(){
+                    Text(item.name)
+                      .fontSize(18)
+                      .fontWeight(400)
+                      .baselineOffset(-5)
+                      .margin({ bottom: 5 });
+                  }
 
-                  Text('结束时间：'+ item.endTime)
-                    .fontSize(13)
-                    .opacity(0.6);
+                  Column() {
+                    Text('开始时间：'+ item.startTime)
+                      .fontSize(13)
+                      .opacity(0.6);
+
+                    Text('结束时间：'+ item.endTime)
+                      .fontSize(13)
+                      .opacity(0.6);
+                  }
+                  .width('100%');
                 }
-                .width('100%');
-              }
-              .onClick(() => {
-                console.info("pushedPath" + JSON.stringify(this.pageInfos))
+                .onClick(() => {
+                  console.info("pushedPath" + JSON.stringify(this.pageInfos))
                   this.pageInfos.pushPath({
                     name: "TaskDetails",
                     param: item,
-                    onPop:()=> this.flushSchedules()
+                    onPop:(popInfo)=> {if(popInfo) this.flushSchedules()
+                      console.info("弹出页面" + popInfo)
+                    }
                   })
 
                 }
-              )
-            }
-            .width('100%');
-          }
-          .margin({left:12})
-          .width('100%')
-          .backgroundColor(Color.White)
-          .swipeAction({
-            end: {
-              // index为该ListItem在List中的索引值。
-              builder: () => { this.itemEnd(index,true) },
-            }
-          })
-          .padding(5);
-        });
-      }.width('100%');
-
-      Blank().margin({bottom:20})
-
-      // 已完成任务标识
-      Column() {
-        Text('已完成')
-          .fontSize(20)
-          .margin({ left: 15,bottom:10 })
-          .fontWeight(600)
-          .width('337')
-      }.alignItems(HorizontalAlign.Start)
-
-      List({ space: 10 }) {
-        ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
-          ListItem() {
-            Row() {
-              Image($r('app.media.ic_gallery_material_select_checkbo'))
-                .width(24)
-                .height(24)
-                .margin({right:10})
-                .onClick(() => { this.toggleComplete(index,true) });
-
-              Row() {
-                Column(){
-                  Text(item.name)
-                    .fontSize(18)
-                    .fontWeight(400)
-                    .baselineOffset(-5)
-                    .margin({ bottom: 5 });
-                }
-
-                Column() {
-                  Text('开始时间：'+ item.startTime)
-                    .fontSize(13)
-                    .opacity(0.6);
-
-                  Text('结束时间：'+ item.endTime)
-                    .fontSize(13)
-                    .opacity(0.6);
-                }
-                .width('100%');
+                )
               }
-              .onClick(() => this.pageInfos.pushPath({
-                name: "TaskDetails",
-                param: item,
-                onPop:()=> this.flushSchedules()
-              }))
+              .width('100%');
             }
-            .width('100%');
-          }
-          .margin({left:12})
-          .width('100%')
-          .backgroundColor(Color.White)
-          .swipeAction({
-            end: {
-              // index为该ListItem在List中的索引值。
-              builder: () => { this.itemEnd(index,false) },
+            .margin({left:12})
+            .width('100%')
+            .backgroundColor(Color.White)
+            .swipeAction({
+              end: {
+                // index为该ListItem在List中的索引值。
+                builder: () => { this.itemEnd(index,true) },
+              }
+            })
+            .padding(5);
+          });
+        }.width('100%');
+
+        Blank().margin({bottom:20})
+
+        // 已完成任务标识
+        Column() {
+          Text('已完成')
+            .fontSize(20)
+            .margin({ left: 15,bottom:10 })
+            .fontWeight(600)
+            .width('337')
+        }.alignItems(HorizontalAlign.Start)
+
+        List({ space: 10 }) {
+          ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
+            ListItem() {
+              Row() {
+                Image($r('app.media.ic_gallery_material_select_checkbo'))
+                  .width(24)
+                  .height(24)
+                  .margin({right:10})
+                  .onClick(() => { this.toggleComplete(index,true) });
+
+                Row() {
+                  Column(){
+                    Text(item.name)
+                      .fontSize(18)
+                      .fontWeight(400)
+                      .baselineOffset(-5)
+                      .margin({ bottom: 5 });
+                  }
+
+                  Column() {
+                    Text('开始时间：'+ item.startTime)
+                      .fontSize(13)
+                      .opacity(0.6);
+
+                    Text('结束时间：'+ item.endTime)
+                      .fontSize(13)
+                      .opacity(0.6);
+                  }
+                  .width('100%');
+                }
+                .onClick(() => this.pageInfos.pushPath({
+                  name: "TaskDetails",
+                  param: item,
+                  onPop:(popInfo)=> {if(popInfo)
+                    this.flushSchedules()
+                    console.info("弹出页面" + popInfo)
+                  }
+                }))
+              }
+              .width('100%');
             }
-          })
-          .padding(5);
-        });
-      }.width('100%')
-    }
-  }
-
-  //-------------构建-----------------------
-
-  build() {
-    Column() {
-      Navigation(this.pageInfos) {
-        Column(){Blank().margin({bottom:20})}
-        // 主任务列表页面的内容
-        Scroll(this.scroller){
-          this.taskListPage();
-        }
+            .margin({left:12})
+            .width('100%')
+            .backgroundColor(Color.White)
+            .swipeAction({
+              end: {
+                // index为该ListItem在List中的索引值。
+                builder: () => { this.itemEnd(index,false) },
+              }
+            })
+            .padding(5);
+          });
+        }.width('100%')
       }
-      .hideBackButton(false)
-      .title('日程管理', {
-        paddingStart: LengthMetrics.vp(16),
-        paddingEnd: LengthMetrics.vp(32),
-      })
-      .titleMode(NavigationTitleMode.Mini)
-      .mode(NavigationMode.Stack) // 分栏模式，可以改为堆栈模式 (Stack) 以适应页面需求
-      .navDestination(this.PageMap) // 使用 PageMap 控制页面内容
-      .title(this.NavigationTitle)
-      .menus(this.NavigationMenus)
-      .titleMode(NavigationTitleMode.Mini)
-    }
-    .width('100%')
-    .height('100%');
+    }.onWillShow(()=>{this.flushSchedules()
+      console.info("Tasklist shown and flushed")
+    })
+    .onBackPressed(()=>{
+      router.replaceUrl({ url:"pages/Index"});
+      return true;
+    })
+    .title(this.NavigationTitle)
+    .menus(this.NavigationMenus)
   }
 
   /**
@@ -552,7 +575,7 @@ struct SchedulePage {
         }
       });
     }
-    console.info('获取一次日程')
+    console.info('已刷新')
   }
 
   reRenderSchedules(){
@@ -561,14 +584,5 @@ struct SchedulePage {
     this.arrDone.splice(0,1);
     this.arrNotDone.splice(0,0,new Schedule.Schedule());
     this.arrNotDone.splice(0,1);
-  }
-
-  // aboutToAppear(): void {
-  //   this.flushSchedules()
-  // }
-
-  onPageShow(): void {
-    console.info("onPageShow!")
-    this.flushSchedules();
   }
 }

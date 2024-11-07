@@ -11,7 +11,7 @@ export function TaskDetailsBuilder(param: Object) {
 @Component
 struct TaskDetails {
 
-  pageInfos: NavPathStack = new NavPathStack()
+  @Consume('pageInfos') pageInfos: NavPathStack;
   param: Schedule = new Schedule();
   private circularUnit:string [] = ['年','月','日','无周期'];
   private currentDate:Date = new Date();
@@ -266,9 +266,6 @@ struct TaskDetails {
   build() {
     NavDestination(){
       Column() {
-        Row(){
-          Text(JSON.stringify(this.pageInfos))
-        }
         // 页面标题
         Row() {
           Text('任务详情').fontSize(27).margin({ left: 20 });
