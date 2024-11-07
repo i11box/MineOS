@@ -1,6 +1,7 @@
 import { LengthMetrics, SymbolGlyphModifier } from '@kit.ArkUI';
 import * as DataBase from '../data/entity';
 import * as Schedule from '../packages/schedule/schedule';
+import {TaskDetailsBuilder} from './TaskDetails'
 
 @Entry
 @Component
@@ -38,8 +39,8 @@ struct SchedulePage {
   //-------------子页面-----------------------
   @Builder PageMap(name: string, param?: Object) {
     Scroll(this.scroller){
-      if (name === "TaskDetails") {
-        this.taskDetailPage();
+      if (name === "TaskDetails" && param) {
+        TaskDetailsBuilder(param)
       } else {
         this.taskListPage();
       }
@@ -463,22 +464,6 @@ struct SchedulePage {
           .padding(5);
         });
       }.width('100%')
-    }
-  }
-
-  //-------------任务详情页面-----------------------
-  @Builder
-  taskDetailPage() {
-    Column() {
-      Row() {
-        Text('任务详情').fontSize(27).margin({ left: 20 });
-      }.width('100%');
-
-      // 显示任务详细信息
-      Row() {
-        // 这里可以动态展示任务的详细信息
-        Text('任务详情内容将在这里显示...').margin({ top: 20 });
-      }.width('100%');
     }
   }
 

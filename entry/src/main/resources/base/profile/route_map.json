@@ -1,0 +1,12 @@
+{
+  "routerMap": [
+    {
+      "name": "TaskDetails",
+      "pageSourceFile": "src/main/ets/pages/TaskDetails.ets",
+      "buildFunction": "TaskDetailsBuilder",
+      "data": {
+        "description": "this is TaskDetails"
+      }
+    }
+  ]
+}
