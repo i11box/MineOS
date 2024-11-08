@@ -31,6 +31,7 @@ export class DataBaseHelper {
   private static dbInstance : DataBase | null = null;
   private static isInitializing:boolean = false;
 
+  //-------数据库管家处理语句-------------------------------
   static async dbExecute(context: common.BaseContext, callback?: (db: DataBase) => void): Promise<boolean> {
     // 如果已经存在实例，直接调用回调函数
     if (DataBaseHelper.dbInstance) {
@@ -113,6 +114,11 @@ export class DataBase {
 
   //------------------------关于日程的访问----------------------------
   // 增加日程
+  /**
+   *
+   * @param scheduleData
+   * @returns
+   */
   async addSchedule(scheduleData: scheduleClass.Schedule): Promise<void> {
     const schedule = scheduleToValuesBucket(scheduleData)
     if (this.db === null) {
@@ -128,6 +134,12 @@ export class DataBase {
   }
 
   // 更新日程
+  /**
+   *
+   * @param scheduleID
+   * @param updatedData
+   * @returns Promise<void>
+   */
   async updateSchedule(scheduleID: number, updatedData: scheduleClass.Schedule): Promise<void> {
     const schedule = scheduleToValuesBucket(updatedData)
     if (this.db === null) {
@@ -174,6 +186,10 @@ export class DataBase {
   }
 
   // 查询所有日程
+  /**
+   *
+   * @returns Promise<Schedule[]>
+   */
   async queryScheduleAll(): Promise<Schedule[]> {
     let schedules: Schedule[] = [];
     if (!this.db) {
@@ -218,8 +234,11 @@ export class DataBase {
     });
   }
 
-  // 查询所有日程
-
+  // 查询所有父日程
+  /**
+   *
+   * @returns Promise<Schedule[]>
+   */
   async queryScheduleIsParent(): Promise<Schedule[]> {
     let schedules: Schedule[] = [];
     if (!this.db) {
@@ -265,7 +284,12 @@ export class DataBase {
     });
   }
 
-  // 查询日程
+  // 通过序号查询日程
+  /**
+   *
+   * @param scheduleSn
+   * @returns Promise<Schedule[]>
+   */
   async queryScheduleBySn(scheduleSn: number): Promise<Schedule[]> {
     let schedules: Schedule[] = []
     if (this.db === null) {
@@ -305,6 +329,11 @@ export class DataBase {
   //------------------------关于日程列表的访问----------------------------
 
   // 增加日程列表
+  /**
+   *
+   * @param scheduleList
+   * @returns
+   */
   async addScheduleList(scheduleList: scheduleClass.ScheduleList): Promise<void> {
     const valuesBucket = scheduleListToValuesBucket(scheduleList);
     if (this.db === null) {
@@ -319,7 +348,13 @@ export class DataBase {
     }
   }
 
-  // 更新日程列表
+  // 按id更新日程列表
+  /**
+   *
+   * @param listID
+   * @param updatedData
+   * @returns
+   */
   async updateScheduleList(listID: number, updatedData: scheduleClass.ScheduleList): Promise<void> {
     const valuesBucket = scheduleListToValuesBucket(updatedData);
     if (this.db === null) {
@@ -338,7 +373,12 @@ export class DataBase {
     }
   }
 
-  // 删除日程列表
+  // 按id删除日程列表
+  /**
+   *
+   * @param listID
+   * @returns
+   */
   async deleteScheduleList(listID: number): Promise<void> {
     if (this.db === null) {
       console.error("数据库未初始化");
@@ -355,7 +395,12 @@ export class DataBase {
     }
   }
 
-  // 查询日程列表
+  // 按序号查询日程列表
+  /**
+   *
+   * @param listSn
+   * @returns
+   */
   async queryScheduleListBySn(listSn: number): Promise<void> {
     if (this.db === null) {
       console.error("数据库未初始化");

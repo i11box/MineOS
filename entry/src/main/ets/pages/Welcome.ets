@@ -5,6 +5,8 @@ import data_preferences from '@ohos.data.preferences';
 const H_STORE = "J_OS"; // 首选项存储名称
 const SLOGAN = "USER_SLOGAN"; // 假设标语的 key
 
+
+//----------------欢迎页面---------------------
 @Entry
 @Component
 struct WelcomePage {

@@ -1,12 +1,15 @@
 import relationalStore from '@ohos.data.relationalStore';
 import { securityLabel } from '@kit.CoreFileKit';
 
+//-----------数据库基本配置--------------
+
 export const DB_NAME = 'J_OS.db'
 export const DB_CONFIG : relationalStore.StoreConfig = {
   name: DB_NAME,
   securityLevel: relationalStore.SecurityLevel.S1
 };
 
+//-----------数据库语句----------------
 // Schedule 表定义
 export const GET_TABLE_SCHEDULE = `
   CREATE TABLE IF NOT EXISTS schedule (
@@ -28,8 +31,10 @@ export const GET_TABLE_SCHEDULE = `
 // ScheduleList 表定义
 export const GET_TABLE_SCHEDULE_LIST = `
   CREATE TABLE IF NOT EXISTS schedule_list (
-      list_sn INTEGER PRIMARY KEY,
-      list_name TEXT NOT NULL
+      list_sn INTEGER NOT NULL,
+      schedule_sn INTEGER NOT NULL,
+      list_name TEXT NOT NULL,
+      UNIQUE(list_sn, schedule_sn)
   );
 `;
 
@@ -49,14 +54,25 @@ export const GET_TABLE_VIEW = `
   CREATE TABLE IF NOT EXISTS view (
     view_sn INTEGER NOT NULL,
     days INTEGER,
-    schedule_sn INTEGER NOT NULL,
+    schedule_list_sn INTEGER NOT NULL,
     FOREIGN KEY(schedule_sn) REFERENCES schedule(schedule_sn),
   );
 `;
 
+export const DROP_TABLE_TAG = `
+  DROP TABLE IF EXISTS tag;
+  DROP TABLE IF EXISTS schedule_tag;
+`;
+
+export const DROP_TABLE_SCHEDULE_LIST = `
+  DROP TABLE IF EXISTS schedule_list_schedule;
+  DROP TABLE IF EXISTS schedule_list;
+`;
+
 export const GET_TABLE:string[] = [
+  DROP_TABLE_SCHEDULE_LIST,
+  DROP_TABLE_TAG,
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
-  GET_TABLE_SCHEDULE_LIST_SCHEDULE,
   GET_TABLE_VIEW
 ]

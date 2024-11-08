@@ -9,13 +9,14 @@ export function TaskListBuilder() {
   taskListPage()
 }
 
+//--------------路由根页面---------------------
 @Entry
 @Component
 struct SchedulePage {
   // 页面导航栈，用于管理页面堆栈
   @Provide('pageInfos') pageInfos: NavPathStack = new NavPathStack();
   private scroller:Scroller = new Scroller()
-  //-------------构建-----------------------
+
 
   //-------------子页面-----------------------
   @Builder PageMap(name: string, param?: Object) {
@@ -29,6 +30,7 @@ struct SchedulePage {
     .scrollBarColor(Color.Gray)
   }
 
+  //-------------构建-----------------------
   build() {
     Navigation(this.pageInfos) {
       Column(){Blank().margin({bottom:20})}
@@ -83,9 +85,6 @@ struct taskListPage {
   @State private startTimeSelected:Date = this.currentDate;
   @State private endTimeSelected:Date = this.currentDate;
   //----------------------------------------
-
-  //-------------与页面通信的全局变量-----------
-  static isShouldFlush:boolean = false;
 
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
@@ -533,6 +532,7 @@ struct taskListPage {
     .menus(this.NavigationMenus)
   }
 
+  //-------------相关方法------------------
   /**
    * 切换任务完成状态
    * @param index
