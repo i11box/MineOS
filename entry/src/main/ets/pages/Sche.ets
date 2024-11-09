@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI';
 import { LengthMetrics, SymbolGlyphModifier } from '@kit.ArkUI';
 import * as DataBase from '../data/entity';
 import * as Schedule from '../packages/schedule/schedule';
+import { ScheduleList } from '../packages/schedule/schedule';
 import {TaskDetailsBuilder} from './TaskDetails'
 
 @Builder
@@ -58,6 +59,7 @@ struct SchedulePage {
 @Component
 struct taskListPage {
 
+
   @Consume('pageInfos') pageInfos: NavPathStack;
   @State arr: Schedule.Schedule[] = []
   @State arrDone:Schedule.Schedule[] = []
@@ -85,6 +87,10 @@ struct taskListPage {
   @State private startTimeSelected:Date = this.currentDate;
   @State private endTimeSelected:Date = this.currentDate;
   //----------------------------------------
+
+  //--------------添加日程列表页所用变量-----------
+  @State private listArr: Schedule.ScheduleList[] = []
+  @State private list:Schedule.ScheduleList = new ScheduleList(-1,'')
 
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
@@ -345,7 +351,8 @@ struct taskListPage {
                 this.endTime,
                 parentSn
               );
-              await db.addSchedule(newSchedule)
+              const newScheduleRowId = await db.addSchedule(newSchedule)
+              await db.addScheduleScheduleList(newScheduleRowId,this.list.listSn);
               this.flushSchedules();
               this.isAddScheduleShow = false;
               this.isAddSubScheduleShow = false;
@@ -356,6 +363,32 @@ struct taskListPage {
     .backgroundColor(Color.White);
   }
 
+  //-----------添加日程列表菜单-----------------
+  @Builder
+  MyMenu(){
+    Menu() {
+      MenuItem({content: "全部" })
+        .onClick(()=>{
+          this.list = new ScheduleList(-1,'')
+          this.flushSchedules();
+        })
+      MenuItemGroup({ header: '日程列表' }) {
+        ForEach(this.listArr, (item: Schedule.ScheduleList, index: number) => {
+          MenuItem({content:item.listName})
+            .onClick(()=>{
+              this.list = item;
+              this.flushSchedules(this.list.listSn);
+            })
+        });
+      }
+      MenuItemGroup({ header: '视图' }) {
+        MenuItem({
+          content: "菜单选项",
+        })
+      }
+      MenuItem({content: "新建..." })
+    }
+  }
 
   build(){
     NavDestination(){
@@ -363,7 +396,9 @@ struct taskListPage {
         // 标题栏
         Row() {
           Text('日程列表').fontSize(20).margin({ left: 20 });
-          Image($r('app.media.ic_public_down_arrow')).width('8%')
+          Image($r('app.media.ic_public_down_arrow'))
+            .width('8%')
+            .bindMenu()
         }.width('100%');
 
         // 搜索框
@@ -560,13 +595,18 @@ struct taskListPage {
   /**
    * 获取所有日程
    */
-  flushSchedules(){
+  flushSchedules(listSn:number = -1){
     let context = this.getUIContext().getHostContext();
     if (context) {
       DataBase.DataBaseHelper.dbExecute(context, async (db) => {
         try {
-          const data = await db.queryScheduleIsParent();
-          this.arr = data; // 赋值操作
+          if(listSn == -1){
+            const data = await db.queryScheduleIsParent();
+            this.arr = data; // 赋值操作
+          }else{
+            const data = await db.queryScheduleByListIsParent(listSn)
+            this.arr = data; // 赋值操作
+          }
           this.arrDone = this.arr.filter(item => item.status && item.name.includes(this.searchChangeValue));
           this.arrNotDone = this.arr.filter(item => !item.status && item.name.includes(this.searchChangeValue));
           this.reRenderSchedules()
@@ -584,5 +624,27 @@ struct taskListPage {
     this.arrDone.splice(0,1);
     this.arrNotDone.splice(0,0,new Schedule.Schedule());
     this.arrNotDone.splice(0,1);
+  }
+
+  flushScheduleLists(){
+    let context = this.getUIContext().getHostContext();
+    if (context) {
+      DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        try {
+          const data = await db.queryScheduleListsAll();
+          this.listArr = data; // 赋值操作
+          this.reRenderSchedulesLists()
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+    console.info('已刷新')
+  }
+
+  reRenderSchedulesLists(){
+    // 重绘
+    this.listArr.splice(0,0,new Schedule.ScheduleList(-1,''));
+    this.listArr.splice(0,1);
   }
 }

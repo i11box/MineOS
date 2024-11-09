@@ -31,10 +31,8 @@ export const GET_TABLE_SCHEDULE = `
 // ScheduleList 表定义
 export const GET_TABLE_SCHEDULE_LIST = `
   CREATE TABLE IF NOT EXISTS schedule_list (
-      list_sn INTEGER NOT NULL,
-      schedule_sn INTEGER NOT NULL,
+      list_sn INTEGER PRIMARY KEY,
       list_name TEXT NOT NULL,
-      UNIQUE(list_sn, schedule_sn)
   );
 `;
 
@@ -55,7 +53,7 @@ export const GET_TABLE_VIEW = `
     view_sn INTEGER NOT NULL,
     days INTEGER,
     schedule_list_sn INTEGER NOT NULL,
-    FOREIGN KEY(schedule_sn) REFERENCES schedule(schedule_sn),
+    FOREIGN KEY(schedule_list_sn) REFERENCES schedule_list(list_sn),
   );
 `;
 
@@ -65,14 +63,13 @@ export const DROP_TABLE_TAG = `
 `;
 
 export const DROP_TABLE_SCHEDULE_LIST = `
-  DROP TABLE IF EXISTS schedule_list_schedule;
   DROP TABLE IF EXISTS schedule_list;
 `;
 
 export const GET_TABLE:string[] = [
   DROP_TABLE_SCHEDULE_LIST,
-  DROP_TABLE_TAG,
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
+  GET_TABLE_SCHEDULE_LIST_SCHEDULE,
   GET_TABLE_VIEW
 ]
