@@ -36,6 +36,7 @@ struct WelcomePage {
       .catch((err:Error) => {
         console.error('获取Preferences失败:', err);
       });
+    console.info("读取标语成功")
     this.JumpMain()
   }
 

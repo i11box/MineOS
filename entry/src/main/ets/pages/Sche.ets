@@ -90,7 +90,36 @@ struct taskListPage {
 
   //--------------添加日程列表页所用变量-----------
   @State private listArr: Schedule.ScheduleList[] = []
-  @State private list:Schedule.ScheduleList = new ScheduleList(-1,'')
+  @State private list:Schedule.ScheduleList = new ScheduleList(0,'')
+  dialogController?: CustomDialogController | null = new CustomDialogController({
+    builder:AddListDialog({
+      confirmFlushScheduleList:()=>{this.flushScheduleLists()},
+      closeSelf:  (): void => { this.dialogController?.close(); }
+    }),
+    onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
+      console.info("reason=" + JSON.stringify(dismissDialogAction.reason))
+      console.log("dialog onWillDismiss")
+      if (dismissDialogAction.reason == DismissReason.PRESS_BACK) {
+        dismissDialogAction.dismiss()
+      }
+      if (dismissDialogAction.reason == DismissReason.TOUCH_OUTSIDE) {
+        dismissDialogAction.dismiss()
+      }
+    },
+    autoCancel:true,
+    alignment: DialogAlignment.Center,
+    offset: { dx: 0, dy: -20 },
+    customStyle: false,
+    cornerRadius: 20,
+    width: 300,
+    height: 600,
+    borderWidth: 1,
+    borderStyle: BorderStyle.Dashed,//使用borderStyle属性，需要和borderWidth属性一起使用
+    borderColor: Color.Blue,//使用borderColor属性，需要和borderWidth属性一起使用
+    backgroundColor: Color.White,
+    shadow: ({ radius: 20, color: Color.Grey, offsetX: 50, offsetY: 0}),
+  })
+
 
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
@@ -365,11 +394,11 @@ struct taskListPage {
 
   //-----------添加日程列表菜单-----------------
   @Builder
-  MyMenu(){
+  ListMenu(){
     Menu() {
       MenuItem({content: "全部" })
         .onClick(()=>{
-          this.list = new ScheduleList(-1,'')
+          this.list = new ScheduleList(0,'')
           this.flushSchedules();
         })
       MenuItemGroup({ header: '日程列表' }) {
@@ -380,15 +409,22 @@ struct taskListPage {
               this.flushSchedules(this.list.listSn);
             })
         });
+        MenuItem({content: "新建日程列表" }).onClick(()=>{
+          if(this.dialogController)
+            this.dialogController.open()
+        })
       }
       MenuItemGroup({ header: '视图' }) {
         MenuItem({
           content: "菜单选项",
         })
       }
-      MenuItem({content: "新建..." })
+      MenuItem({content: "新建..." }).onClick(()=>{})
     }
   }
+
+  //-----------新建日程列表弹窗--------------
+
 
   build(){
     NavDestination(){
@@ -398,7 +434,7 @@ struct taskListPage {
           Text('日程列表').fontSize(20).margin({ left: 20 });
           Image($r('app.media.ic_public_down_arrow'))
             .width('8%')
-            .bindMenu()
+            .bindMenu(this.ListMenu)
         }.width('100%');
 
         // 搜索框
@@ -595,12 +631,12 @@ struct taskListPage {
   /**
    * 获取所有日程
    */
-  flushSchedules(listSn:number = -1){
+  flushSchedules(listSn:number = 0){
     let context = this.getUIContext().getHostContext();
     if (context) {
       DataBase.DataBaseHelper.dbExecute(context, async (db) => {
         try {
-          if(listSn == -1){
+          if(listSn == 0){
             const data = await db.queryScheduleIsParent();
             this.arr = data; // 赋值操作
           }else{
@@ -644,7 +680,70 @@ struct taskListPage {
 
   reRenderSchedulesLists(){
     // 重绘
-    this.listArr.splice(0,0,new Schedule.ScheduleList(-1,''));
+    this.listArr.splice(0,0,new Schedule.ScheduleList(0,''));
     this.listArr.splice(0,1);
+  }
+
+  aboutToDisappear(): void {
+    this.dialogController = null // 将dialogController置空
+  }
+
+  aboutToAppear(): void {
+    this.flushScheduleLists()
+    this.flushSchedules()
+  }
+}
+
+//-----------添加列表弹窗----------------
+@CustomDialog
+struct AddListDialog {
+  controller?: CustomDialogController
+  textInputController:TextInputController = new TextInputController()
+  confirmFlushScheduleList:() => void = ()=>{}
+  closeSelf:()=>void = ()=>{}
+  @State inputValue: string = ''
+  @State confirmValue:string = ''
+
+  cancel: () => void = () => {
+    console.info("提交列表取消")
+    this.closeSelf()
+  }
+  confirm: () => void = async () => {
+    this.confirmValue = this.inputValue;
+    let context = this.getUIContext().getHostContext();
+
+    if (context) {
+      await DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        let newScheduleList = new Schedule.ScheduleList(
+          0,  // 随便设一个id，数据库插入时会重新设置
+          this.confirmValue
+        );
+        const newScheduleRowId = await db.addScheduleList(newScheduleList);
+        this.confirmFlushScheduleList();
+      });
+    }
+
+    console.info("提交列表成功");
+    this.closeSelf();
+  };
+  build() {
+    Column() {
+      Text('新建日程列表')
+        .fontSize(18)
+        .height(100)
+      Text('日程列表名')
+        .fontSize(18)
+        .height(100)
+      TextInput({text:this.inputValue,controller:this.textInputController})
+        .onChange((value: string) => {
+          this.inputValue = value
+        })
+      Button('确认')
+        .onClick(() => this.confirm())
+        .margin(20)
+      Button('取消')
+        .onClick(() => this.cancel())
+        .margin(20)
+    }
   }
 }

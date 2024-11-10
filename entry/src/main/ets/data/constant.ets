@@ -32,7 +32,7 @@ export const GET_TABLE_SCHEDULE = `
 export const GET_TABLE_SCHEDULE_LIST = `
   CREATE TABLE IF NOT EXISTS schedule_list (
       list_sn INTEGER PRIMARY KEY,
-      list_name TEXT NOT NULL,
+      list_name TEXT NOT NULL
   );
 `;
 
@@ -53,7 +53,7 @@ export const GET_TABLE_VIEW = `
     view_sn INTEGER NOT NULL,
     days INTEGER,
     schedule_list_sn INTEGER NOT NULL,
-    FOREIGN KEY(schedule_list_sn) REFERENCES schedule_list(list_sn),
+    FOREIGN KEY(schedule_list_sn) REFERENCES schedule_list(list_sn)
   );
 `;
 
@@ -67,7 +67,6 @@ export const DROP_TABLE_SCHEDULE_LIST = `
 `;
 
 export const GET_TABLE:string[] = [
-  DROP_TABLE_SCHEDULE_LIST,
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
   GET_TABLE_SCHEDULE_LIST_SCHEDULE,

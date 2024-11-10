@@ -119,6 +119,15 @@ export class DataBase {
     console.info("所有表创建成功");
   }
 
+  // 初始化数据库，顺序创建所有表
+  async initSeqDB(): Promise<void> {
+    // 使用 Promise.all 让所有表的创建并行执行
+    for(let table of dbConstant.GET_TABLE){
+      await this.createTable(table);
+    }
+    console.info("所有表创建成功");
+  }
+
   //------------------------关于日程的访问----------------------------
   // 增加日程
   /**
@@ -419,6 +428,56 @@ export class DataBase {
     // 将查询操作包装为一个 Promise
     return new Promise<Schedule[]>((resolve, reject) => {
       this.db!.querySql(queryString,[listSn], (err, resultSet) => {
+        if (err) {
+          console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
+          reject(err); // 在查询失败时拒绝 Promise
+          return;
+        }
+
+        console.info(`查询结果列数：${resultSet.columnCount}`);
+        console.info(resultSet.rowCount.toString());
+
+        // 遍历查询结果集并填充到 schedules 数组中
+        while (resultSet.goToNextRow()) {
+          const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+          const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
+          const name: string = resultSet.getString(resultSet.getColumnIndex("schedule_name"));
+          const startTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("start_time")));
+          const endTime: Date = new Date(resultSet.getString(resultSet.getColumnIndex("end_time")));
+          const circular: number = resultSet.getLong(resultSet.getColumnIndex("circular"));
+          const prior: number = resultSet.getLong(resultSet.getColumnIndex("prior"));
+          const status: boolean = Boolean(resultSet.getLong(resultSet.getColumnIndex("status")));
+          const parent: number = resultSet.getLong(resultSet.getColumnIndex("parent_schedule_sn"));
+
+          schedules.push(new Schedule(
+            sn, content, name, circular, prior, status, startTime, endTime, parent
+          ));
+        }
+
+        resultSet.close(); // 释放内存
+        resolve(schedules); // 在查询完成后解析 Promise
+      });
+    });
+  }
+
+  // 通过日程查询子日程
+  /**
+   *
+   * @returns Promise<Schedule[]>
+   */
+  async queryScheduleByParentSchedule(scheduleSn:number): Promise<Schedule[]> {
+    let schedules: Schedule[] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return schedules;
+    }
+
+    const predicates = new relationalStore.RdbPredicates("schedule");
+    predicates.equalTo("parent", scheduleSn);
+
+    // 将查询操作包装为一个 Promise
+    return new Promise<Schedule[]>((resolve, reject) => {
+      this.db!.query(predicates, (err, resultSet) => {
         if (err) {
           console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
           reject(err); // 在查询失败时拒绝 Promise
