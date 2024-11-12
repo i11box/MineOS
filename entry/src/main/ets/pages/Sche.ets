@@ -5,6 +5,10 @@ import * as Schedule from '../packages/schedule/schedule';
 import { ScheduleList } from '../packages/schedule/schedule';
 import {TaskDetailsBuilder} from './TaskDetails'
 
+interface GeneratedTypeLiteralInterface_1 {
+  slogan: string;
+}
+
 @Builder
 export function TaskListBuilder() {
   taskListPage()
@@ -71,6 +75,7 @@ struct taskListPage {
   @State private searchSubmitValue:string = '';
 
   private scheduleIsWatching:Schedule.Schedule = new Schedule.Schedule();
+  private slogan:string = '';
 
   //------------添加日程页所用变量--------------
   private circularUnit:string [] = ['年','月','日','无周期'];
@@ -382,7 +387,7 @@ struct taskListPage {
               );
               const newScheduleRowId = await db.addSchedule(newSchedule)
               await db.addScheduleScheduleList(newScheduleRowId,this.list.listSn);
-              this.flushSchedules();
+              this.flushSchedules(this.list.listSn);
               this.isAddScheduleShow = false;
               this.isAddSubScheduleShow = false;
             })
@@ -396,7 +401,7 @@ struct taskListPage {
   @Builder
   ListMenu(){
     Menu() {
-      MenuItem({content: "全部" })
+      MenuItem({content: "全部日程" })
         .onClick(()=>{
           this.list = new ScheduleList(0,'')
           this.flushSchedules();
@@ -409,10 +414,6 @@ struct taskListPage {
               this.flushSchedules(this.list.listSn);
             })
         });
-        MenuItem({content: "新建日程列表" }).onClick(()=>{
-          if(this.dialogController)
-            this.dialogController.open()
-        })
       }
       MenuItemGroup({ header: '视图' }) {
         MenuItem({
@@ -420,6 +421,48 @@ struct taskListPage {
         })
       }
       MenuItem({content: "新建..." }).onClick(()=>{})
+    }
+  }
+
+  //-----------日程列表管理菜单-----------------
+  @Builder
+  ListManageMenu(){
+    Menu() {
+      MenuItem({content: "删除" })
+        .onClick(()=>{
+          AlertDialog.show(
+            {
+              title: '是否删除该日程列表？',
+              message: '该操作无法撤回，且列表内所有日程均会被删除',
+              autoCancel: true,
+              alignment: DialogAlignment.Default,
+              gridCount: 4,
+              offset: { dx: 0, dy: -20 },
+              primaryButton: {
+                value: '取消',
+                action: () => {
+                  console.info('Callback when the first button is clicked')
+                }
+              },
+              secondaryButton: {
+                enabled: true,
+                defaultFocus: true,
+                style: DialogButtonStyle.HIGHLIGHT,
+                value: '删除',
+                action: () => {
+                  console.info('Callback when the second button is clicked')
+                }
+              },
+              cancel: () => {
+                console.info('Closed callbacks')
+              }
+            })
+        })
+      MenuItem({content: "新建..." })
+        .onClick(()=>{
+        if(this.dialogController)
+          this.dialogController.open()
+      })
     }
   }
 
@@ -596,7 +639,7 @@ struct taskListPage {
       console.info("Tasklist shown and flushed")
     })
     .onBackPressed(()=>{
-      router.replaceUrl({ url:"pages/Index"});
+      router.replaceUrl({ url:"pages/Index",params:{slogan:this.slogan}});
       return true;
     })
     .title(this.NavigationTitle)
@@ -689,6 +732,10 @@ struct taskListPage {
   }
 
   aboutToAppear(): void {
+    let routerParams = router.getParams() as GeneratedTypeLiteralInterface_1 // 使用类型断言，该接口包含路由中的所有类型;
+    if (routerParams) {
+      this.slogan = routerParams.slogan;
+    }
     this.flushScheduleLists()
     this.flushSchedules()
   }

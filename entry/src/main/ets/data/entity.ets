@@ -418,12 +418,7 @@ export class DataBase {
       return schedules;
     }
 
-    const queryString:string =`
-      SELECT s.*,schedule_list_schedule.*
-      FROM schedules s,schedule_list_schedule
-      JOIN schedule_list_schedule sa ON s.schedule_id = sa.schedule_id
-      WHERE sa.list_id = ? AND s.parent_schedule_sn != -1;
-    `
+    const queryString:string ="SELECT * FROM schedule WHERE schedule_sn IN (SELECT schedule_sn FROM schedule_list_schedule WHERE list_sn = ?)"
 
     // 将查询操作包装为一个 Promise
     return new Promise<Schedule[]>((resolve, reject) => {
@@ -435,6 +430,7 @@ export class DataBase {
         }
 
         console.info(`查询结果列数：${resultSet.columnCount}`);
+        console.info(listSn.toString())
         console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
@@ -473,7 +469,7 @@ export class DataBase {
     }
 
     const predicates = new relationalStore.RdbPredicates("schedule");
-    predicates.equalTo("parent", scheduleSn);
+    predicates.equalTo("parent_schedule_sn", scheduleSn);
 
     // 将查询操作包装为一个 Promise
     return new Promise<Schedule[]>((resolve, reject) => {
@@ -569,6 +565,7 @@ export class DataBase {
       return;
     }
     try {
+      // 用sql直接删除
       const predicates = new relationalStore.RdbPredicates("schedule_list");
       predicates.equalTo("list_sn", listID); // 通过 ID 查找日程列表
 

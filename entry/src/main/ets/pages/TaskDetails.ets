@@ -27,6 +27,7 @@ struct TaskDetails {
   @State private startTimeSelected:Date = this.currentDate;
   @State private endTimeSelected:Date = this.currentDate;
   @State private isEditScheduleShow:boolean = false;
+  @State childSchedules:Schedule[] = []
 
   //-------------编辑日程子页面--------------
   @Builder EditSchedulePage() {
@@ -306,6 +307,15 @@ struct TaskDetails {
           Text('备注').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
           Text(this.content).fontSize(16).margin({ left: 20 });
         }.alignItems(HorizontalAlign.Start);
+
+        ForEach(this.childSchedules, (item: Schedule, index: number) => {
+          Column(){
+            Text('子日程名'+ item.name);
+            Text('子日程起始时间' + item.startTime?.toString());
+            Text('子日程结束时间' + item.endTime?.toString());
+            Text('子日程优先级' + item.prior.toString());
+          }
+        });
       }
       .padding(20)
       .backgroundColor(Color.White);
@@ -327,5 +337,21 @@ struct TaskDetails {
     })
     .onWillHide(()=>{})
     .menus(this.NavigationMenus)
+  }
+
+  aboutToAppear(): void {
+    let context = this.getUIContext().getHostContext();
+    if (context) {
+      DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        try {
+          const data = await db.queryScheduleByParentSchedule(this.param.scheduleSn);
+          // this.childSchedules = data; // 赋值操作 TODO:等处理好子日程逻辑再来看这个
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+    console.info('已刷新')
+    
   }
 }
