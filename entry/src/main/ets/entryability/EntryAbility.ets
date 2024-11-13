@@ -16,7 +16,7 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    database.DataBaseHelper.dbExecute(this.context,(db)=>{if(db) db.initDB()})  // 数据库初始化
+    database.DataBaseHelper.dbExecute(this.context,(db)=>{if(db) db.initSeqDB()})  // 数据库初始化
 
     console.info('Get RdbStore successfully.');
 

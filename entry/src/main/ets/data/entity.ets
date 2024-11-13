@@ -364,12 +364,7 @@ export class DataBase {
       return schedules;
     }
 
-    const queryString:string =`
-      SELECT s.*,schedule_list_schedule.*
-      FROM schedules s,schedule_list_schedule
-      JOIN schedule_list_schedule sa ON s.schedule_id = sa.schedule_id
-      WHERE sa.list_id = ?;
-    `
+    const queryString:string ="SELECT * FROM schedule WHERE schedule_sn IN (SELECT schedule_sn FROM schedule_list_schedule WHERE list_sn = ?)"
 
     // 将查询操作包装为一个 Promise
     return new Promise<Schedule[]>((resolve, reject) => {
@@ -564,16 +559,72 @@ export class DataBase {
       console.error("数据库未初始化");
       return;
     }
-    try {
-      // 用sql直接删除
-      const predicates = new relationalStore.RdbPredicates("schedule_list");
-      predicates.equalTo("list_sn", listID); // 通过 ID 查找日程列表
 
-      const rowsDeleted = await this.db.delete(predicates);
-      console.info(`日程列表删除成功，删除的行数：${rowsDeleted}`);
-    } catch (err) {
-      console.error(`日程列表删除失败，错误代码: ${err.code}，信息: ${err.message}`);
+    const queryString:string ="SELECT * FROM schedule WHERE schedule_sn IN (SELECT schedule_sn FROM schedule_list_schedule WHERE list_sn = ?)"
+
+    const schedules:Schedule[] = await this.queryScheduleByList(listID);
+
+    console.info(`schedule_len = ${schedules.length.toString()}`)
+    for(const sche of schedules){
+        // 找到相关联的日程，先删除关联
+        let predicatesOfScheduleListSchedule = new relationalStore.RdbPredicates("schedule_list_schedule");
+        predicatesOfScheduleListSchedule.equalTo("schedule_sn",sche.scheduleSn)
+        this.db!.delete(predicatesOfScheduleListSchedule, (err, rows) => {
+          if (err) {
+            console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
+            return;
+          }
+          console.info(`Delete rows of schedule_list_schedule: ${rows}`);
+        });
+        // 接下来删除日程
+        let predicateOfSchedule = new relationalStore.RdbPredicates("schedule");
+        predicateOfSchedule.equalTo("schedule_sn",sche.scheduleSn);
+        this.db!.delete(predicateOfSchedule,(err, rows) => {
+          if (err) {
+            console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
+            return;
+          }
+          console.info(`Delete rows of schedule: ${rows}`);
+        });
     }
+      // // 遍历查询结果集并填充到 schedules 数组中
+      // while (resultSet.goToNextRow()) {
+      //   const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
+      //   // 找到相关联的日程，先删除关联
+      //   let predicatesOfScheduleListSchedule = new relationalStore.RdbPredicates("schedule_list_schedule");
+      //   predicatesOfScheduleListSchedule.equalTo("schedule_sn",sn)
+      //   this.db!.delete(predicatesOfScheduleListSchedule, (err, rows) => {
+      //     if (err) {
+      //       console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
+      //       return;
+      //     }
+      //     console.info(`Delete rows of schedule_list_schedule: ${rows}`);
+      //   });
+      //   // 接下来删除日程
+      //   let predicateOfSchedule = new relationalStore.RdbPredicates("schedule");
+      //   predicateOfSchedule.equalTo("schedule_sn",sn);
+      //   this.db!.delete(predicateOfSchedule,(err, rows) => {
+      //     if (err) {
+      //       console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
+      //       return;
+      //     }
+      //     console.info(`Delete rows of schedule: ${rows}`);
+      //   });
+      // }
+      //
+      // 最后删除日程列表
+      let predicateOfScheduleList = new relationalStore.RdbPredicates("schedule_list");
+      predicateOfScheduleList.equalTo("list_sn",listID);
+      this.db!.delete(predicateOfScheduleList,(err, rows) => {
+        if (err) {
+          console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
+          return;
+        }
+        console.info(`Delete rows of schedule_list: ${rows}`);
+      });
+      //
+      // resultSet.close(); // 释放内存
+
   }
 
   // 按序号查询日程列表

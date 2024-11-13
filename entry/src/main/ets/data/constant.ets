@@ -41,8 +41,6 @@ export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
   CREATE TABLE IF NOT EXISTS schedule_list_schedule (
     list_sn INTEGER NOT NULL,
     schedule_sn INTEGER NOT NULL,
-    FOREIGN KEY(list_sn) REFERENCES schedule_list(list_sn),
-    FOREIGN KEY(schedule_sn) REFERENCES schedule(schedule_sn),
     UNIQUE(list_sn, schedule_sn)
   );
 `;
@@ -58,17 +56,35 @@ export const GET_TABLE_VIEW = `
 `;
 
 export const DROP_TABLE_TAG = `
-  DROP TABLE IF EXISTS tag;
-  DROP TABLE IF EXISTS schedule_tag;
+  DROP TABLE schedule_tag;
+  DROP TABLE schedule_list_schedule_new;
 `;
 
 export const DROP_TABLE_SCHEDULE_LIST = `
   DROP TABLE IF EXISTS schedule_list;
 `;
 
+export const UPDATE_TABLE_SCHEDULE_LIST_SCHEDULE = `
+  CREATE TABLE IF NOT EXISTS schedule_list_schedule_new (
+    list_sn INTEGER NOT NULL,
+    schedule_sn INTEGER NOT NULL,
+    UNIQUE(list_sn, schedule_sn)
+  );
+
+  INSERT INTO schedule_list_schedule_new (list_sn, schedule_sn)
+  SELECT list_sn, schedule_sn
+  FROM schedule_list_schedule;
+
+  DROP TABLE schedule_list_schedule;
+
+  ALTER TABLE schedule_list_schedule_new
+  RENAME TO schedule_list_schedule;
+`
+
 export const GET_TABLE:string[] = [
   GET_TABLE_SCHEDULE,
   GET_TABLE_SCHEDULE_LIST,
   GET_TABLE_SCHEDULE_LIST_SCHEDULE,
-  GET_TABLE_VIEW
+  GET_TABLE_VIEW,
+  DROP_TABLE_TAG
 ]

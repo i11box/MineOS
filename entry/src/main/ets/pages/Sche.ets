@@ -69,6 +69,7 @@ struct taskListPage {
   @State arrDone:Schedule.Schedule[] = []
   @State arrNotDone:Schedule.Schedule[] = []
 
+  @State private isListManageShow:boolean = false;
   @State private isAddScheduleShow:boolean = false;
   @State private isAddSubScheduleShow:boolean = false;
   @State private searchChangeValue:string = '';
@@ -156,6 +157,7 @@ struct taskListPage {
         .width(24)
         .height(24)
         .margin({left:20})
+        .bindMenu(this.ListManageMenu)
     }.margin({ right:20,top:15 })
   }
 
@@ -420,7 +422,6 @@ struct taskListPage {
           content: "菜单选项",
         })
       }
-      MenuItem({content: "新建..." }).onClick(()=>{})
     }
   }
 
@@ -449,8 +450,15 @@ struct taskListPage {
                 defaultFocus: true,
                 style: DialogButtonStyle.HIGHLIGHT,
                 value: '删除',
-                action: () => {
-                  console.info('Callback when the second button is clicked')
+                action: async () => {
+                  let context = this.getUIContext().getHostContext()
+                  if(context)
+                    await DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
+                      let dlsn:number = this.list.listSn;
+                      await db.deleteScheduleList(dlsn);
+                      this.list = new ScheduleList(0,'')
+                      this.flushSchedules(this.list.listSn);
+                    })
                 }
               },
               cancel: () => {
@@ -458,11 +466,16 @@ struct taskListPage {
               }
             })
         })
-      MenuItem({content: "新建..." })
+      MenuItem({content: "新建日程" })
         .onClick(()=>{
         if(this.dialogController)
           this.dialogController.open()
       })
+      MenuItem({content: "新建视图" })
+        .onClick(()=>{
+          if(this.dialogController)
+            this.dialogController.open()
+        })
     }
   }
 
