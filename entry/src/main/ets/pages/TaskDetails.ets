@@ -250,7 +250,8 @@ struct TaskDetails {
                   let context = this.getUIContext().getHostContext()
                   if(context)
                     DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
-                      await db.deleteSchedule(this.param.scheduleSn); //TODO:要考虑关联表
+                      await db.deleteScheduleListScheduleByScheduleSn(this.param.scheduleSn);
+                      await db.deleteSchedule(this.param.scheduleSn);
                     })
                   this.pageInfos.pop({number:1})
                 }

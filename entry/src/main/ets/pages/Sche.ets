@@ -126,6 +126,15 @@ struct taskListPage {
     shadow: ({ radius: 20, color: Color.Grey, offsetX: 50, offsetY: 0}),
   })
 
+  //---------------添加视图所用变量-------------
+  @State private view:Schedule.View = new Schedule.View(0,null,'',[]);
+  @State viewName:string = '';
+  @State viewDays:number|null = null;
+  @State viewListSns:number[] = [];
+  @State selectedLists:number[] = [];
+  @State private isAddViewShow:boolean = false;
+  @State viewArr:Schedule.View[] = [];
+  private taskListScroller:Scroller = new Scroller;
 
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
@@ -198,11 +207,13 @@ struct taskListPage {
                 if(context)
                   DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
                     if(isNeedSubSchedule){
-                      await db.deleteSchedule(this.arrNotDone[index].scheduleSn); //TODO:要考虑关联表
+                      await db.deleteScheduleListScheduleByScheduleSn(this.arrNotDone[index].scheduleSn);
+                      await db.deleteSchedule(this.arrNotDone[index].scheduleSn);
                       this.arrNotDone.splice(index,1); // 视图上删除
                     }
                     else{
-                      await db.deleteSchedule(this.arrDone[index].scheduleSn); //TODO:要考虑关联表
+                      await db.deleteScheduleListScheduleByScheduleSn(this.arrDone[index].scheduleSn);
+                      await db.deleteSchedule(this.arrDone[index].scheduleSn);
                       this.arrDone.splice(index,1);
                     }
                   })
@@ -230,6 +241,106 @@ struct taskListPage {
         }
       }
     }
+  }
+
+  //-------------添加视图页面-----------------------
+  @Builder AddViewPage() {
+    Column() {
+      // 标题
+      Text(`创建视图`).fontSize(20).fontWeight(600).margin({ bottom: 20 });
+      // 输入视图名
+      Column(){
+        Text('视图名称').margin({left:5,bottom:10})
+        TextInput()
+          .width('90%')
+          .height(35)
+          .fontSize(16)
+          .margin({left:5,bottom:10})
+          .onChange((value)=>{
+            this.viewName = value;
+          })
+      }.alignItems(HorizontalAlign.Start)
+
+      // 时间范围为未来几天
+      Column() {
+        Text('时间范围').fontSize(16).margin({left:5}).width('89%')
+        Row(){
+          TextInput()
+            .width('30%')
+            .height(35)
+            .fontSize(16)
+            .onChange((value:string)=>{
+              if(!Number.isNaN(Number(value)))
+                this.viewDays = Number(value) * this.circularUnitNum[this.circularUnitSelected]
+            })
+          TextPicker({range:this.circularUnit, selected:this.circularUnitSelected})
+            .onChange((value:string|string [])=>{
+              if(!Number.isNaN(Number(value)))
+                this.viewDays = Number(value) * this.circularUnitNum[this.circularUnitSelected]
+            })
+            .margin({left:15})
+            .height('8%')
+            .width('20%')
+        }
+      }.alignItems(HorizontalAlign.Start)
+
+      // 选中的列表
+      Column() {
+        List(){
+          ForEach(this.listArr,(item:Schedule.ScheduleList, index:number)=>{
+            ListItem(){
+              Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+                Checkbox({ name: 'checkbox_'+index.toString(), group: 'listGroup' })
+                  .selectedColor(0x39a2db)
+                  .shape(CheckBoxShape.ROUNDED_SQUARE)
+                  .onChange((value: boolean) => {
+                    if(value)
+                      this.selectedLists.push(item.listSn);
+                    else {
+                      const itemIndex = this.selectedLists.findIndex(sn => sn === item.listSn);
+                      if (itemIndex !== -1) {
+                        this.selectedLists.splice(itemIndex, 1);
+                      }
+                    }
+                    console.info(item.listName+'change is'+ value)
+                  })
+                  .unselectedColor(Color.Gray)
+                  .width(30)
+                  .height(30)
+                Text(item.listName).fontSize(20)
+              }
+            }
+          })
+        }
+
+      }
+
+      // 提交按钮
+      Button('提交')
+        .margin({top:40})
+        .width('80%')
+        .height(40)
+        .backgroundColor('#4CAF50')
+        .onClick(async () => {
+          let context = this.getUIContext().getHostContext()
+          this.viewListSns = this.selectedLists;
+          if(context)
+            await DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
+              let newView = new Schedule.View(
+                0,  // 随便设一个id，数据库插入时会重新设置
+                this.viewDays,
+                this.viewName,
+                this.viewListSns
+              );
+              await db.addView(newView);
+              this.flushSchedules(this.list.listSn);
+              this.isAddViewShow = false;
+              console.info('Page is about to disappear due to button commit, isAddViewShow:', this.isAddViewShow);
+            })
+        });
+    }
+    .padding(20)
+    .backgroundColor(Color.White);
   }
 
   //-------------添加日程页面-----------------------
@@ -418,14 +529,18 @@ struct taskListPage {
         });
       }
       MenuItemGroup({ header: '视图' }) {
-        MenuItem({
-          content: "菜单选项",
-        })
+        ForEach(this.viewArr, (item: Schedule.View, index: number) => {
+          MenuItem({content:item.viewName})
+            .onClick(()=>{
+              this.view = item;
+              this.flushSchedules(this.list.listSn); //TODO:加入视图的业务逻辑，用视图刷新arrDone和arrNotDone
+            })
+        });
       }
     }
   }
 
-  //-----------日程列表管理菜单-----------------
+  //-----------日程列表管理菜单-----------------t
   @Builder
   ListManageMenu(){
     Menu() {
@@ -473,8 +588,13 @@ struct taskListPage {
       })
       MenuItem({content: "新建视图" })
         .onClick(()=>{
-          if(this.dialogController)
-            this.dialogController.open()
+          this.isAddViewShow = true;
+          console.info('Page is about to appear, isAddViewShow:', this.isAddViewShow)
+        })
+        .bindSheet($$this.isAddViewShow, this.AddViewPage(), {
+          height: 600,
+          onWillDisappear:()=>{
+            console.info('Page is about to disappear, isAddViewShow:', this.isAddViewShow);}
         })
     }
   }
@@ -710,6 +830,9 @@ struct taskListPage {
     console.info('已刷新')
   }
 
+  /**
+   * 重绘UI中的日程
+   */
   reRenderSchedules(){
     // 重绘
     this.arrDone.splice(0,0,new Schedule.Schedule());
@@ -718,6 +841,9 @@ struct taskListPage {
     this.arrNotDone.splice(0,1);
   }
 
+  /**
+   * 刷新日程列表
+   */
   flushScheduleLists(){
     let context = this.getUIContext().getHostContext();
     if (context) {
@@ -734,16 +860,53 @@ struct taskListPage {
     console.info('已刷新')
   }
 
+  /**
+   * 重绘UI中的日程列表
+   */
   reRenderSchedulesLists(){
     // 重绘
     this.listArr.splice(0,0,new Schedule.ScheduleList(0,''));
     this.listArr.splice(0,1);
   }
 
+  /**
+   * 刷新视图
+   */
+  flushViews(){
+    let context = this.getUIContext().getHostContext();
+    if (context) {
+      DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        try {
+          const data = await db.queryViewsAll();
+          this.viewArr = data; // 赋值操作
+          this.reRenderViews()
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+    console.info('已刷新')
+  }
+
+  /**
+   * 重绘视图
+   */
+  reRenderViews(){
+    // 重绘
+    this.viewArr.splice(0,0,new Schedule.View(0,null,'',[]));
+    this.listArr.splice(0,1);
+  }
+
+  /**
+   * 页面生命周期函数，消失时调用
+   */
   aboutToDisappear(): void {
     this.dialogController = null // 将dialogController置空
   }
 
+  /**
+   * 页面生命周期函数，出现时调用
+   */
   aboutToAppear(): void {
     let routerParams = router.getParams() as GeneratedTypeLiteralInterface_1 // 使用类型断言，该接口包含路由中的所有类型;
     if (routerParams) {

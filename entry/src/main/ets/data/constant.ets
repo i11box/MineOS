@@ -81,10 +81,20 @@ export const UPDATE_TABLE_SCHEDULE_LIST_SCHEDULE = `
   RENAME TO schedule_list_schedule;
 `
 
+export const DROP_TABLE_VIEW = `
+  DROP TABLE IF EXISTS view;
+`
+
+export const CREATE_TABLE_VIEW = `
+  CREATE TABLE IF NOT EXISTS view(
+    view_sn INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    days INTEGER,
+    list_sn INTEGER
+  )
+`
+
 export const GET_TABLE:string[] = [
-  GET_TABLE_SCHEDULE,
-  GET_TABLE_SCHEDULE_LIST,
-  GET_TABLE_SCHEDULE_LIST_SCHEDULE,
-  GET_TABLE_VIEW,
-  DROP_TABLE_TAG
+  DROP_TABLE_VIEW,
+  CREATE_TABLE_VIEW
 ]

@@ -32,6 +32,23 @@ function scheduleScheduleListToValuesBucket(scheduleSn:number,listSn:number): re
   };
 }
 
+/**
+ *
+ * @param view
+ * @returns values view与列表关系的数组
+ */
+function viewToValuesBucket(view:scheduleClass.View):relationalStore.ValuesBucket[] {
+  let values:relationalStore.ValuesBucket[] = []
+  for(let listSn of view.listSns){
+    values.push({
+      view_sn:view.viewSn,
+      days:view.viewDays,
+      name:view.viewName,
+      list_sn:listSn})
+  }
+  return values;
+}
+
 //-----------------数据库类-------------------------------
 
 export class DataBaseHelper {
@@ -695,6 +712,167 @@ export class DataBase {
         resultSet.close(); // 释放内存
         resolve(lists); // 在查询完成后解析 Promise
       });
+    });
+  }
+
+  //---------------日程与列表关联----------------
+  /**
+   * 通过日程编号，删除关联
+   * @param scheduleSn
+   * @returns
+   */
+  async deleteScheduleListScheduleByScheduleSn(scheduleSn:number): Promise<void> {
+    if (this.db === null) {
+      console.error("数据库未初始化");
+      return;
+    }
+    try {
+      const predicates = new relationalStore.RdbPredicates("schedule_list_schedule");
+      predicates.equalTo("schedule_sn", scheduleSn); // 通过 ID 查找视图
+      const rowsDeleted = await this.db.delete(predicates);
+      console.info(`删除成功，删除的行数：${rowsDeleted}`);
+    } catch (err) {
+      console.error(`删除失败，错误代码: ${err.code}，信息: ${err.message}`);
+    }
+  }
+
+
+  //--------------------视图--------------------
+  /**
+   * 增加视图
+   * @param view
+   * @returns
+   */
+  async addView(view:scheduleClass.View): Promise<void> {
+    const valuesBuckets = viewToValuesBucket(view);
+    if (this.db === null) {
+      console.error("数据库未初始化");
+      return;
+    }
+    try {
+      for (let value of valuesBuckets){
+        const rowId = await this.db.insert("view", value);
+        console.info(`视图插入成功，rowId = ${rowId}`);
+      }
+    } catch (err) {
+      console.error(`视图插入失败，错误代码: ${err.code}，信息: ${err.message}`);
+    }
+  }
+
+  /**
+   * 通过视图号删除视图
+   * @param viewSn
+   * @returns
+   */
+  async deleteView(viewSn: number): Promise<void> {
+    if (this.db === null) {
+      console.error("数据库未初始化");
+      return;
+    }
+    try {
+      const predicates = new relationalStore.RdbPredicates("schedule");
+      predicates.equalTo("view_sn", viewSn); // 通过 ID 查找视图
+      const rowsDeleted = await this.db.delete(predicates);
+      console.info(`删除成功，删除的行数：${rowsDeleted}`);
+    } catch (err) {
+      console.error(`删除失败，错误代码: ${err.code}，信息: ${err.message}`);
+    }
+  }
+
+  // 查询所有视图编号
+  /**
+   *
+   * @returns
+   */
+  async queryViewsSnAll(): Promise<number[]> {
+    let viewSns: number [] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return viewSns;
+    }
+
+    const querySQL = `
+    SELECT view_sn DISTINCT FROM view
+    `
+
+    // 将查询操作包装为一个 Promise
+    return new Promise<number[]>((resolve, reject) => {
+      this.db!.querySql(querySQL, (err, resultSet) => {
+        if (err) {
+          console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
+          reject(err); // 在查询失败时拒绝 Promise
+          return;
+        }
+
+        console.info(`查询结果列数：${resultSet.columnCount}`);
+        console.info(resultSet.rowCount.toString());
+
+        // 遍历查询结果集并填充到 schedules 数组中
+        while (resultSet.goToNextRow()) {
+          const sn: number = resultSet.getLong((resultSet.getColumnIndex("view_sn")));
+          viewSns.push(sn);
+        }
+
+        resultSet.close(); // 释放内存
+        resolve(viewSns); // 在查询完成后解析 Promise
+      });
+    });
+  }
+
+  // 查询所有视图
+  /**
+   *
+   * @returns
+   */
+  async queryViewsAll(): Promise<scheduleClass.View[]> {
+    let viewSns: number[] = [];
+    let views: scheduleClass.View [] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return views;
+    }
+
+    viewSns = await this.queryViewsSnAll();
+
+    if(viewSns.length==0){
+      console.info("no view")
+      return [];
+    }
+
+    // 将查询操作包装为一个 Promise
+    return new Promise<scheduleClass.View[]>((resolve, reject) => {
+      for(let viewSn of viewSns){
+        const predicates = new relationalStore.RdbPredicates("views");
+        predicates.equalTo("view_sn",viewSn)
+        this.db!.query(predicates, (err, resultSet) => {
+          if (err) {
+            console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
+            reject(err); // 在查询失败时拒绝 Promise
+            return;
+          }
+
+          console.info(`查询结果列数：${resultSet.columnCount}`);
+          console.info(resultSet.rowCount.toString());
+
+          let viewListSns:number[] = [];
+          let name: string = '';
+          let days:number|null = null;
+          let listSn:number;
+
+          // 遍历查询结果集并填充到 schedules 数组中
+          while (resultSet.goToNextRow()) {
+            name = resultSet.getString(resultSet.getColumnIndex("name"));
+            days = resultSet.getLong(resultSet.getColumnIndex("days"));
+            listSn = resultSet.getLong(resultSet.getColumnIndex("list_sn"));
+            viewListSns.push(listSn);
+          }
+
+          views.push(new scheduleClass.View(viewSn,days,name,viewListSns))
+
+          resultSet.close(); // 释放内存
+          resolve(views); // 在查询完成后解析 Promise
+        });
+      }
     });
   }
 }

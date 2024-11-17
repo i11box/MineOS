@@ -45,3 +45,23 @@ export class Schedule {
     this.parent = parent;
   }
 }
+
+// 视图类
+export class View {
+  viewSn:number;
+  viewDays:number|null;
+  viewName:string;
+  listSns:number[];
+
+  constructor(
+    viewSn:number,
+    viewDays:number|null,
+    viewName:string,
+    listSns:number[]
+  ) {
+    this.viewSn = viewSn;
+    this.viewDays = viewDays;
+    this.viewName = viewName;
+    this.listSns = listSns;
+  }
+}
