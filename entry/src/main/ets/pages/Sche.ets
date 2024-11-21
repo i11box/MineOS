@@ -872,6 +872,7 @@ struct taskListPage {
     // 重绘
     this.listArr.splice(0,0,new Schedule.ScheduleList(0,''));
     this.listArr.splice(0,1);
+
   }
 
   /**

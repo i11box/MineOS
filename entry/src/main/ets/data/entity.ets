@@ -775,19 +775,19 @@ export class DataBase {
    *
    * @returns
    */
-  async queryViewsSnAll(): Promise<number[]> {
-    let viewSns: number [] = [];
+  async queryViewsNameAll(): Promise<string[]> {
+    let viewNames: string [] = [];
     if (!this.db) {
       console.error("数据库未初始化");
-      return viewSns;
+      return viewNames;
     }
 
     const querySQL = `
-    SELECT view_sn DISTINCT FROM view
+    SELECT DISTINCT name FROM view;
     `
 
     // 将查询操作包装为一个 Promise
-    return new Promise<number[]>((resolve, reject) => {
+    return new Promise<string[]>((resolve, reject) => {
       this.db!.querySql(querySQL, (err, resultSet) => {
         if (err) {
           console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
@@ -797,12 +797,13 @@ export class DataBase {
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
-          const sn: number = resultSet.getLong((resultSet.getColumnIndex("view_sn")));
-          viewSns.push(sn);
+          const name: string = resultSet.getString((resultSet.getColumnIndex("name")));
+          viewNames.push(name);
         }
 
         resultSet.close(); // 释放内存
-        resolve(viewSns); // 在查询完成后解析 Promise
+        console.log(viewNames.length.toString())
+        resolve(viewNames); // 在查询完成后解析 Promise
       });
     });
   }
@@ -813,20 +814,21 @@ export class DataBase {
    * @returns
    */
   async queryViewsAll(): Promise<scheduleClass.View[]> {
-    let viewSns: number[] = [];
+    let viewNames: string[] = [];
     let views: scheduleClass.View [] = [];
     if (!this.db) {
       console.error("数据库未初始化");
       return views;
     }
 
-    viewSns = await this.queryViewsSnAll();
+    viewNames = await this.queryViewsNameAll();
+    console.assert(viewNames.length>0,`视图长度不对`)
 
     // 将查询操作包装为一个 Promise
     return new Promise<scheduleClass.View[]>((resolve, reject) => {
-      for(let viewSn of viewSns){
-        const predicates = new relationalStore.RdbPredicates("views");
-        predicates.equalTo("view_sn",viewSn)
+      for(let viewName of viewNames){
+        const predicates = new relationalStore.RdbPredicates("view");
+        predicates.equalTo("name",viewName)
         this.db!.query(predicates, (err, resultSet) => {
           if (err) {
             console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
@@ -835,19 +837,19 @@ export class DataBase {
           }
 
           let viewListSns:number[] = [];
-          let name: string = '';
+          let sn:number = -1;
           let days:number|null = null;
           let listSn:number;
 
           // 遍历查询结果集并填充到 schedules 数组中
           while (resultSet.goToNextRow()) {
-            name = resultSet.getString(resultSet.getColumnIndex("name"));
+            sn = resultSet.getLong(resultSet.getColumnIndex("view_sn"));
             days = resultSet.getLong(resultSet.getColumnIndex("days"));
             listSn = resultSet.getLong(resultSet.getColumnIndex("list_sn"));
             viewListSns.push(listSn);
           }
-
-          views.push(new scheduleClass.View(viewSn,days,name,viewListSns))
+          console.assert(sn!=-1,'sn等于-1')
+          views.push(new scheduleClass.View(sn,days,viewName,viewListSns))
 
           resultSet.close(); // 释放内存
           resolve(views); // 在查询完成后解析 Promise
