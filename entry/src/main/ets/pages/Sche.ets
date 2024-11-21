@@ -103,7 +103,6 @@ struct taskListPage {
       closeSelf:  (): void => { this.addListDialogController?.close(); }
     }),
     onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
-      console.info("reason=" + JSON.stringify(dismissDialogAction.reason))
       console.log("dialog onWillDismiss")
       if (dismissDialogAction.reason == DismissReason.PRESS_BACK) {
         dismissDialogAction.dismiss()
@@ -142,7 +141,6 @@ struct taskListPage {
       closeSelf:  (): void => { this.addViewDialogController?.close(); }
     }),
     onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
-      console.info("reason=" + JSON.stringify(dismissDialogAction.reason))
       console.log("dialog onWillDismiss")
       if (dismissDialogAction.reason == DismissReason.PRESS_BACK) {
         dismissDialogAction.dismiss()
@@ -221,7 +219,6 @@ struct taskListPage {
             primaryButton: {
               value: '取消',
               action: () => {
-                console.info('Callback when the first button is clicked')
               }
             },
             secondaryButton: {
@@ -230,7 +227,6 @@ struct taskListPage {
               style: DialogButtonStyle.HIGHLIGHT,
               value: '删除',
               action: () => {
-                console.info('Callback when the second button is clicked')
                 let context = this.getUIContext().getHostContext()
                 if(context)
                   DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
@@ -248,7 +244,6 @@ struct taskListPage {
               }
             },
             cancel: () => {
-              console.info('Closed callbacks')
             }
           }
         )
@@ -330,7 +325,6 @@ struct taskListPage {
                         this.selectedLists.splice(itemIndex, 1);
                       }
                     }
-                    console.info(item.listName+'change is'+ value)
                   })
                   .unselectedColor(Color.Gray)
                   .width(30)
@@ -340,7 +334,6 @@ struct taskListPage {
             }
           })
         }
-
       }
 
       // 提交按钮
@@ -363,7 +356,6 @@ struct taskListPage {
               await db.addView(newView);
               this.flushSchedules(this.list.listSn);
               this.isAddViewShow = false;
-              console.info('Page is about to disappear due to button commit, isAddViewShow:', this.isAddViewShow);
             })
         });
     }
@@ -434,11 +426,9 @@ struct taskListPage {
                 // 通过Date的setFullYear方法设置按下确定按钮时的日期，这样当弹窗再次弹出时显示选中的是上一次确定的日期
                 this.startTimeSelected = value
                 this.startTime = value
-                console.info("DatePickerDialog:onDateAccept()" + value.toString())
               },
               onCancel: () => {
                 this.startTimeSelected = this.currentDate;
-                console.info("DatePickerDialog:onCancel()")
               }
             })
           })
@@ -467,15 +457,12 @@ struct taskListPage {
                   this.endTimeSelected = value
                   this.endTime = value
                 }else{
-                  console.info('[!WARN] EndTime greater than StartTime')
                   this.endTimeSelected = this.currentDate;
                   this.endTime = this.currentDate;
                 }
-                console.info("EndTime DatePickerDialog:onDateAccept()" + value.toString())
               },
               onCancel: () => {
                 this.endTimeSelected = this.currentDate;
-                console.info("EndTime DatePickerDialog:onCancel()")
               }
             })
           })
@@ -561,7 +548,7 @@ struct taskListPage {
           MenuItem({content:item.viewName})
             .onClick(()=>{
               this.view = item;
-              this.flushSchedules(this.list.listSn); //TODO:加入视图的业务逻辑，用视图刷新arrDone和arrNotDone
+              this.flushSchedules(this.list.listSn,this.view);
             })
         });
       }
@@ -585,7 +572,6 @@ struct taskListPage {
               primaryButton: {
                 value: '取消',
                 action: () => {
-                  console.info('Callback when the first button is clicked')
                 }
               },
               secondaryButton: {
@@ -605,7 +591,6 @@ struct taskListPage {
                 }
               },
               cancel: () => {
-                console.info('Closed callbacks')
               }
             })
         })
@@ -699,12 +684,10 @@ struct taskListPage {
                   .width('100%');
                 }
                 .onClick(() => {
-                  console.info("pushedPath" + JSON.stringify(this.pageInfos))
                   this.pageInfos.pushPath({
                     name: "TaskDetails",
                     param: item,
                     onPop:(popInfo)=> {if(popInfo) this.flushSchedules()
-                      console.info("弹出页面" + popInfo)
                     }
                   })
 
@@ -772,7 +755,6 @@ struct taskListPage {
                   param: item,
                   onPop:(popInfo)=> {if(popInfo)
                     this.flushSchedules()
-                    console.info("弹出页面" + popInfo)
                   }
                 }))
               }
@@ -791,9 +773,7 @@ struct taskListPage {
           });
         }.width('100%')
       }
-    }.onWillShow(()=>{this.flushSchedules()
-      console.info("Tasklist shown and flushed")
-    })
+    }.onWillShow(()=>{this.flushSchedules()})
     .onBackPressed(()=>{
       router.replaceUrl({ url:"pages/Index",params:{slogan:this.slogan}});
       return true;
@@ -830,7 +810,7 @@ struct taskListPage {
   /**
    * 获取所有日程
    */
-  flushSchedules(listSn:number = 0){
+  flushSchedules(listSn:number = 0,view:Schedule.View|null = null){
     let context = this.getUIContext().getHostContext();
     if (context) {
       DataBase.DataBaseHelper.dbExecute(context, async (db) => {
@@ -838,9 +818,13 @@ struct taskListPage {
           if(listSn == 0){
             const data = await db.queryScheduleIsParent();
             this.arr = data; // 赋值操作
-          }else{
+          }
+          else if(view === null){
             const data = await db.queryScheduleByListIsParent(listSn)
             this.arr = data; // 赋值操作
+          }else {
+            const data = await db.queryScheduleByView(view);
+            this.arr = data;
           }
           this.arrDone = this.arr.filter(item => item.status && item.name.includes(this.searchChangeValue));
           this.arrNotDone = this.arr.filter(item => !item.status && item.name.includes(this.searchChangeValue));
@@ -850,7 +834,6 @@ struct taskListPage {
         }
       });
     }
-    console.info('已刷新')
   }
 
   /**
@@ -880,7 +863,6 @@ struct taskListPage {
         }
       });
     }
-    console.info('已刷新')
   }
 
   /**
@@ -908,24 +890,16 @@ struct taskListPage {
         }
       });
     }
-    console.info('已刷新')
   }
 
   /**
+   *
    * 重绘视图
    */
   reRenderViews(){
     // 重绘
     this.viewArr.splice(0,0,new Schedule.View(0,null,'',[]));
-    this.listArr.splice(0,1);
-  }
-
-  /**
-   * 用于新建视图时调用
-   * @returns listArr
-   */
-  getListArr(){
-    return this.listArr;
+    this.viewArr.splice(0,1);
   }
 
   /**
@@ -946,6 +920,7 @@ struct taskListPage {
     }
     this.flushScheduleLists()
     this.flushSchedules()
+    this.flushViews()
   }
 }
 
@@ -960,7 +935,6 @@ struct AddListDialog {
   @State confirmValue:string = ''
 
   cancel: () => void = () => {
-    console.info("提交列表取消")
     this.closeSelf()
   }
   confirm: () => void = async () => {
@@ -978,7 +952,6 @@ struct AddListDialog {
       });
     }
 
-    console.info("提交列表成功");
     this.closeSelf();
   };
   build() {
@@ -1019,15 +992,11 @@ struct AddViewDialog {
   viewDays: number = 0;
   viewListSns:number[] = [];
 
-  haha:()=>void = ()=>{console.log(this.listArr.length.toString())}
-
   cancel: () => void = () => {
-    console.info("取消创建视图");
     this.closeSelf();
   };
 
   confirm: () => void = async () => {
-    console.info("确认创建视图");
     let context = this.getUIContext().getHostContext();
     if (context) {
       this.viewListSns = this.selectedLists;
@@ -1108,7 +1077,6 @@ struct AddViewDialog {
                         this.selectedLists.splice(itemIndex, 1);
                       }
                     }
-                    console.info(item.listName + 'change is' + value);
                   })
                   .unselectedColor(Color.Gray)
                   .width(30)
@@ -1125,9 +1093,6 @@ struct AddViewDialog {
       Row() {
         Button('确认')
           .onClick(() => this.confirm())
-          .margin({ right: 20 });
-        Button('hh')
-          .onClick(() => this.haha())
           .margin({ right: 20 });
         Button('取消')
           .onClick(() => this.cancel());

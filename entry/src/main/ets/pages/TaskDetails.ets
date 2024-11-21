@@ -92,11 +92,9 @@ struct TaskDetails {
                 // 通过Date的setFullYear方法设置按下确定按钮时的日期，这样当弹窗再次弹出时显示选中的是上一次确定的日期
                 this.startTimeSelected = value
                 this.startTime = value
-                console.info("DatePickerDialog:onDateAccept()" + value.toString())
               },
               onCancel: () => {
                 this.startTimeSelected = this.currentDate;
-                console.info("DatePickerDialog:onCancel()")
               }
             })
           })
@@ -125,15 +123,12 @@ struct TaskDetails {
                   this.endTimeSelected = value
                   this.endTime = value
                 }else{
-                  console.info('[!WARN] EndTime greater than StartTime')
                   this.endTimeSelected = this.currentDate;
                   this.endTime = this.currentDate;
                 }
-                console.info("EndTime DatePickerDialog:onDateAccept()" + value.toString())
               },
               onCancel: () => {
                 this.endTimeSelected = this.currentDate;
-                console.info("EndTime DatePickerDialog:onCancel()")
               }
             })
           })
@@ -237,7 +232,6 @@ struct TaskDetails {
               primaryButton: {
                 value: '取消',
                 action: () => {
-                  console.info('Callback when the first button is clicked')
                 }
               },
               secondaryButton: {
@@ -246,7 +240,6 @@ struct TaskDetails {
                 style: DialogButtonStyle.HIGHLIGHT,
                 value: '删除',
                 action: () => {
-                  console.info('Callback when the second button is clicked')
                   let context = this.getUIContext().getHostContext()
                   if(context)
                     DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
@@ -257,7 +250,6 @@ struct TaskDetails {
                 }
               },
               cancel: () => {
-                console.info('Closed callbacks')
               }
             }
           )
@@ -352,7 +344,5 @@ struct TaskDetails {
         }
       });
     }
-    console.info('已刷新')
-    
   }
 }

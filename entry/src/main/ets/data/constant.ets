@@ -28,13 +28,8 @@ export const GET_TABLE_SCHEDULE = `
   );
 `;
 
-// ScheduleList 表定义
-export const GET_TABLE_SCHEDULE_LIST = `
-  CREATE TABLE IF NOT EXISTS schedule_list (
-      list_sn INTEGER PRIMARY KEY,
-      list_name TEXT NOT NULL
-  );
-`;
+
+
 
 // ScheduleList_Schedule 关联表定义
 export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
@@ -87,7 +82,7 @@ export const DROP_TABLE_VIEW = `
 
 export const CREATE_TABLE_VIEW = `
   CREATE TABLE IF NOT EXISTS view(
-    view_sn INTEGER NOT NULL,
+    view_sn INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     days INTEGER,
     list_sn INTEGER
@@ -95,6 +90,5 @@ export const CREATE_TABLE_VIEW = `
 `
 
 export const GET_TABLE:string[] = [
-  DROP_TABLE_VIEW,
   CREATE_TABLE_VIEW
 ]

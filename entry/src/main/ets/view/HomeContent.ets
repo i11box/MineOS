@@ -35,7 +35,6 @@ export default struct HomeContent {
           Column() {
             Button('日程', { type: ButtonType.Normal, stateEffect: true })
               .onClick(() => {
-                console.log('Button onClick')
                 router.pushUrl( {url: 'pages/Sche',params:{
                   slogan:this.slogan
                 }})

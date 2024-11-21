@@ -41,7 +41,6 @@ function viewToValuesBucket(view:scheduleClass.View):relationalStore.ValuesBucke
   let values:relationalStore.ValuesBucket[] = []
   for(let listSn of view.listSns){
     values.push({
-      view_sn:view.viewSn,
       days:view.viewDays,
       name:view.viewName,
       list_sn:listSn})
@@ -90,7 +89,6 @@ export class DataBaseHelper {
             return;
           }
 
-          console.info('Get RdbStore successfully.');
           resolve(rdb);
         });
       });
@@ -133,7 +131,6 @@ export class DataBase {
   async initDB(): Promise<void> {
     // 使用 Promise.all 让所有表的创建并行执行
     await Promise.all(dbConstant.GET_TABLE.map((statement): Promise<void> => this.createTable(statement)));
-    console.info("所有表创建成功");
   }
 
   // 初始化数据库，顺序创建所有表
@@ -142,7 +139,6 @@ export class DataBase {
     for(let table of dbConstant.GET_TABLE){
       await this.createTable(table);
     }
-    console.info("所有表创建成功");
   }
 
   //------------------------关于日程的访问----------------------------
@@ -194,7 +190,6 @@ export class DataBase {
 
       const rowsUpdated =
         await this.db.update(schedule, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
-      console.info(`更新成功，更新的行数：${rowsUpdated}`);
     } catch (err) {
       console.error(`更新失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -214,14 +209,7 @@ export class DataBase {
       const predicates = new relationalStore.RdbPredicates("schedule");
       predicates.equalTo("schedule_sn", scheduleID); // 通过 ID 查找日程
 
-      // 调试语句
-      let schedule = await this.queryScheduleBySn(scheduleID)
-      for (const i of schedule) {
-        console.info(i.name)
-      }
-
       const rowsDeleted = await this.db.delete(predicates);
-      console.info(`删除成功，删除的行数：${rowsDeleted}`);
     } catch (err) {
       console.error(`删除失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -250,9 +238,6 @@ export class DataBase {
           return;
         }
 
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
-
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
           const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
@@ -274,6 +259,44 @@ export class DataBase {
         resolve(schedules); // 在查询完成后解析 Promise
       });
     });
+  }
+
+  async queryScheduleByView(view:scheduleClass.View):Promise<Schedule[]>{
+    let schedules: Schedule[] = [];
+    if (!this.db) {
+      console.error("数据库未初始化");
+      return schedules;
+    }
+
+    const currentDate = new Date();
+    const targetDate = view.viewDays
+      ? new Date(currentDate.getTime() + view.viewDays * 24 * 60 * 60 * 1000)
+      : null; // 如果 viewDays 为 null，不做时间限制
+
+    // 通过视图关联的列表查询所有的父日程
+    try {
+      // 遍历视图的所有列表 ID，查询相关的父日程
+      for (const listSn of view.listSns) {
+        const parentSchedules = await this.queryScheduleByListIsParent(listSn);
+
+        // 根据 view 的时间范围过滤日程
+        const filteredSchedules = parentSchedules.filter((schedule) => {
+          if (!schedule.startTime) return false; // 如果没有开始时间，跳过
+          if (schedule.parent !== -1) return false; // 必须是父日程
+          if (targetDate) {
+            return schedule.startTime <= targetDate; // 时间范围限制
+          }
+          return true; // 如果没有时间限制，直接返回
+        });
+
+        // 合并到总结果中
+        schedules = schedules.concat(filteredSchedules);
+      }
+    } catch (error) {
+      console.error("查询视图关联日程失败：", error);
+    }
+
+    return schedules;
   }
 
   // 查询所有父日程
@@ -299,9 +322,6 @@ export class DataBase {
           reject(err); // 在查询失败时拒绝 Promise
           return;
         }
-
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
@@ -346,8 +366,6 @@ export class DataBase {
         console.error(`查询失败，错误代码: ${err.code}，信息: ${err.message}`);
       }
 
-      console.info(`查询结果列数：${resultSet.columnCount}`);
-
       while (resultSet.goToNextRow()) {
         const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
         const content: string = resultSet.getString(resultSet.getColumnIndex("schedule_content"));
@@ -364,14 +382,12 @@ export class DataBase {
         resultSet.close(); // 释放内存
       }
     });
-    console.info('有' + schedules.length.toString())
     return schedules;
   }
 
   // 通过日程列表查询日程
-  // 查询所有父日程
   /**
-   *
+   * @param listSn:number
    * @returns Promise<Schedule[]>
    */
   async queryScheduleByList(listSn:number): Promise<Schedule[]> {
@@ -391,9 +407,6 @@ export class DataBase {
           reject(err); // 在查询失败时拒绝 Promise
           return;
         }
-
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
@@ -440,10 +453,6 @@ export class DataBase {
           reject(err); // 在查询失败时拒绝 Promise
           return;
         }
-
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(listSn.toString())
-        console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
@@ -492,9 +501,6 @@ export class DataBase {
           return;
         }
 
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
-
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
           const sn: number = resultSet.getLong((resultSet.getColumnIndex("schedule_sn")));
@@ -534,7 +540,6 @@ export class DataBase {
     }
     try {
       const rowId = await this.db.insert("schedule_list", valuesBucket);
-      console.info(`日程列表插入成功，rowId = ${rowId}`);
     } catch (err) {
       console.error(`日程列表插入失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -559,7 +564,6 @@ export class DataBase {
 
       const rowsUpdated =
         await this.db.update(valuesBucket, predicates, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
-      console.info(`日程列表更新成功，更新的行数：${rowsUpdated}`);
     } catch (err) {
       console.error(`日程列表更新失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -581,7 +585,6 @@ export class DataBase {
 
     const schedules:Schedule[] = await this.queryScheduleByList(listID);
 
-    console.info(`schedule_len = ${schedules.length.toString()}`)
     for(const sche of schedules){
         // 找到相关联的日程，先删除关联
         let predicatesOfScheduleListSchedule = new relationalStore.RdbPredicates("schedule_list_schedule");
@@ -591,7 +594,6 @@ export class DataBase {
             console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
             return;
           }
-          console.info(`Delete rows of schedule_list_schedule: ${rows}`);
         });
         // 接下来删除日程
         let predicateOfSchedule = new relationalStore.RdbPredicates("schedule");
@@ -601,7 +603,6 @@ export class DataBase {
             console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
             return;
           }
-          console.info(`Delete rows of schedule: ${rows}`);
         });
     }
       // // 遍历查询结果集并填充到 schedules 数组中
@@ -615,7 +616,6 @@ export class DataBase {
       //       console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
       //       return;
       //     }
-      //     console.info(`Delete rows of schedule_list_schedule: ${rows}`);
       //   });
       //   // 接下来删除日程
       //   let predicateOfSchedule = new relationalStore.RdbPredicates("schedule");
@@ -625,7 +625,6 @@ export class DataBase {
       //       console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
       //       return;
       //     }
-      //     console.info(`Delete rows of schedule: ${rows}`);
       //   });
       // }
       //
@@ -637,7 +636,6 @@ export class DataBase {
           console.error(`Delete failed, code is ${err.code},message is ${err.message}`);
           return;
         }
-        console.info(`Delete rows of schedule_list: ${rows}`);
       });
       //
       // resultSet.close(); // 释放内存
@@ -664,12 +662,10 @@ export class DataBase {
         return;
       }
 
-      console.info(`查询结果列数：${resultSet.columnCount}`);
       while (resultSet.goToNextRow()) {
         const id = resultSet.getLong(resultSet.getColumnIndex("list_sn"));
         const name = resultSet.getString(resultSet.getColumnIndex("list_name"));
 
-        console.info(`ID=${id}, 名称=${name}`);
       }
       resultSet.close(); // 释放内存
     });
@@ -697,9 +693,6 @@ export class DataBase {
           reject(err); // 在查询失败时拒绝 Promise
           return;
         }
-
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
 
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
@@ -730,7 +723,6 @@ export class DataBase {
       const predicates = new relationalStore.RdbPredicates("schedule_list_schedule");
       predicates.equalTo("schedule_sn", scheduleSn); // 通过 ID 查找视图
       const rowsDeleted = await this.db.delete(predicates);
-      console.info(`删除成功，删除的行数：${rowsDeleted}`);
     } catch (err) {
       console.error(`删除失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -751,8 +743,8 @@ export class DataBase {
     }
     try {
       for (let value of valuesBuckets){
+        console.info(JSON.stringify(value));
         const rowId = await this.db.insert("view", value);
-        console.info(`视图插入成功，rowId = ${rowId}`);
       }
     } catch (err) {
       console.error(`视图插入失败，错误代码: ${err.code}，信息: ${err.message}`);
@@ -773,7 +765,6 @@ export class DataBase {
       const predicates = new relationalStore.RdbPredicates("schedule");
       predicates.equalTo("view_sn", viewSn); // 通过 ID 查找视图
       const rowsDeleted = await this.db.delete(predicates);
-      console.info(`删除成功，删除的行数：${rowsDeleted}`);
     } catch (err) {
       console.error(`删除失败，错误代码: ${err.code}，信息: ${err.message}`);
     }
@@ -804,9 +795,6 @@ export class DataBase {
           return;
         }
 
-        console.info(`查询结果列数：${resultSet.columnCount}`);
-        console.info(resultSet.rowCount.toString());
-
         // 遍历查询结果集并填充到 schedules 数组中
         while (resultSet.goToNextRow()) {
           const sn: number = resultSet.getLong((resultSet.getColumnIndex("view_sn")));
@@ -834,11 +822,6 @@ export class DataBase {
 
     viewSns = await this.queryViewsSnAll();
 
-    if(viewSns.length==0){
-      console.info("no view")
-      return [];
-    }
-
     // 将查询操作包装为一个 Promise
     return new Promise<scheduleClass.View[]>((resolve, reject) => {
       for(let viewSn of viewSns){
@@ -850,9 +833,6 @@ export class DataBase {
             reject(err); // 在查询失败时拒绝 Promise
             return;
           }
-
-          console.info(`查询结果列数：${resultSet.columnCount}`);
-          console.info(resultSet.rowCount.toString());
 
           let viewListSns:number[] = [];
           let name: string = '';
