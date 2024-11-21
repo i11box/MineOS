@@ -9,6 +9,8 @@ interface GeneratedTypeLiteralInterface_1 {
   slogan: string;
 }
 
+enum ListType {LIST,VIEW};
+
 @Builder
 export function TaskListBuilder() {
   taskListPage()
@@ -74,6 +76,7 @@ struct taskListPage {
   @State private isAddSubScheduleShow:boolean = false;
   @State private searchChangeValue:string = '';
   @State private searchSubmitValue:string = '';
+  @State private isListOrView:ListType = ListType.LIST
 
   private scheduleIsWatching:Schedule.Schedule = new Schedule.Schedule();
   private slogan:string = '';
@@ -137,7 +140,7 @@ struct taskListPage {
   addViewDialogController?: CustomDialogController | null = new CustomDialogController({
     builder:AddViewDialog({
       listArr:this.listArr,
-      confirmFlushScheduleList:()=>{this.flushScheduleLists()},
+      confirmFlushView:()=>{this.flushViews()},
       closeSelf:  (): void => { this.addViewDialogController?.close(); }
     }),
     onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
@@ -532,6 +535,7 @@ struct taskListPage {
       MenuItem({content: "全部日程" })
         .onClick(()=>{
           this.list = new ScheduleList(0,'')
+          this.isListOrView = ListType.LIST;
           this.flushSchedules();
         })
       MenuItemGroup({ header: '日程列表' }) {
@@ -539,6 +543,7 @@ struct taskListPage {
           MenuItem({content:item.listName})
             .onClick(()=>{
               this.list = item;
+              this.isListOrView = ListType.LIST;
               this.flushSchedules(this.list.listSn);
             })
         });
@@ -548,6 +553,7 @@ struct taskListPage {
           MenuItem({content:item.viewName})
             .onClick(()=>{
               this.view = item;
+              this.isListOrView = ListType.VIEW;
               this.flushSchedules(this.list.listSn,this.view);
             })
         });
@@ -563,8 +569,8 @@ struct taskListPage {
         .onClick(()=>{
           AlertDialog.show(
             {
-              title: '是否删除该日程列表？',
-              message: '该操作无法撤回，且列表内所有日程均会被删除',
+              title: this.isListOrView==ListType.LIST?'是否删除该日程列表？':'是否删除该视图？',
+              message: this.isListOrView==ListType.LIST?'该操作无法撤回，且列表内所有日程均会被删除':'该操作无法撤回',
               autoCancel: true,
               alignment: DialogAlignment.Default,
               gridCount: 4,
@@ -581,13 +587,26 @@ struct taskListPage {
                 value: '删除',
                 action: async () => {
                   let context = this.getUIContext().getHostContext()
-                  if(context)
-                    await DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
-                      let dlsn:number = this.list.listSn;
-                      await db.deleteScheduleList(dlsn);
-                      this.list = new ScheduleList(0,'')
-                      this.flushSchedules(this.list.listSn);
-                    })
+                  if(context){
+                    if(this.isListOrView == ListType.LIST){
+                      await DataBase.DataBaseHelper.dbExecute(context,async (db)=>{
+                        let dlsn:number = this.list.listSn;
+                        await db.deleteScheduleList(dlsn);
+                        this.list = new ScheduleList(0,'')
+                        this.flushSchedules(this.list.listSn);
+                        this.flushScheduleLists()
+                      })
+                    }else if(this.isListOrView == ListType.VIEW) {
+                      await DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+                        let dlsn: number = this.view.viewSn;
+                        await db.deleteView(dlsn);
+                        this.list = new ScheduleList(0, '');
+                        this.isListOrView = ListType.LIST;
+                        this.flushSchedules(this.list.listSn);
+                        this.flushViews()
+                      })
+                    }
+                  }
                 }
               },
               cancel: () => {
@@ -986,7 +1005,7 @@ struct AddViewDialog {
   circularUnit: string[] = ['天', '周', '月'];
   circularUnitSelected: number = 0;
   circularUnitNum: number[] = [1, 7, 30];
-  confirmFlushScheduleList:() => void = ()=>{}
+  confirmFlushView:() => void = ()=>{}
   closeSelf:()=>void = ()=>{};
   selectedLists: number[] = [];
   viewName: string = '';
@@ -1009,6 +1028,7 @@ struct AddViewDialog {
           this.viewListSns
         );
         await db.addView(newView);
+        this.confirmFlushView();
       });
     }
     this.closeSelf();

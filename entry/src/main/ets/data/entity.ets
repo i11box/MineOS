@@ -762,7 +762,7 @@ export class DataBase {
       return;
     }
     try {
-      const predicates = new relationalStore.RdbPredicates("schedule");
+      const predicates = new relationalStore.RdbPredicates("view");
       predicates.equalTo("view_sn", viewSn); // 通过 ID 查找视图
       const rowsDeleted = await this.db.delete(predicates);
     } catch (err) {
