@@ -95,12 +95,12 @@ struct taskListPage {
   //----------------------------------------
 
   //--------------添加日程列表页所用变量-----------
-  @State private listArr: Schedule.ScheduleList[] = []
+  @State public listArr: Schedule.ScheduleList[] = []
   @State private list:Schedule.ScheduleList = new ScheduleList(0,'')
-  dialogController?: CustomDialogController | null = new CustomDialogController({
+  addListDialogController?: CustomDialogController | null = new CustomDialogController({
     builder:AddListDialog({
       confirmFlushScheduleList:()=>{this.flushScheduleLists()},
-      closeSelf:  (): void => { this.dialogController?.close(); }
+      closeSelf:  (): void => { this.addListDialogController?.close(); }
     }),
     onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
       console.info("reason=" + JSON.stringify(dismissDialogAction.reason))
@@ -135,7 +135,35 @@ struct taskListPage {
   @State private isAddViewShow:boolean = false;
   @State viewArr:Schedule.View[] = [];
   private taskListScroller:Scroller = new Scroller;
-
+  addViewDialogController?: CustomDialogController | null = new CustomDialogController({
+    builder:AddViewDialog({
+      listArr:this.listArr,
+      confirmFlushScheduleList:()=>{this.flushScheduleLists()},
+      closeSelf:  (): void => { this.addViewDialogController?.close(); }
+    }),
+    onWillDismiss:(dismissDialogAction: DismissDialogAction)=> {
+      console.info("reason=" + JSON.stringify(dismissDialogAction.reason))
+      console.log("dialog onWillDismiss")
+      if (dismissDialogAction.reason == DismissReason.PRESS_BACK) {
+        dismissDialogAction.dismiss()
+      }
+      if (dismissDialogAction.reason == DismissReason.TOUCH_OUTSIDE) {
+        dismissDialogAction.dismiss()
+      }
+    },
+    autoCancel:true,
+    alignment: DialogAlignment.Center,
+    offset: { dx: 0, dy: -20 },
+    customStyle: false,
+    cornerRadius: 20,
+    width: 300,
+    height: 600,
+    borderWidth: 1,
+    borderStyle: BorderStyle.Dashed,//使用borderStyle属性，需要和borderWidth属性一起使用
+    borderColor: Color.Blue,//使用borderColor属性，需要和borderWidth属性一起使用
+    backgroundColor: Color.White,
+    shadow: ({ radius: 20, color: Color.Grey, offsetX: 50, offsetY: 0}),
+  })
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
     Column() {
@@ -583,18 +611,13 @@ struct taskListPage {
         })
       MenuItem({content: "新建日程" })
         .onClick(()=>{
-        if(this.dialogController)
-          this.dialogController.open()
+        if(this.addListDialogController)
+          this.addListDialogController.open()
       })
       MenuItem({content: "新建视图" })
         .onClick(()=>{
-          this.isAddViewShow = true;
-          console.info('Page is about to appear, isAddViewShow:', this.isAddViewShow)
-        })
-        .bindSheet($$this.isAddViewShow, this.AddViewPage(), {
-          height: 600,
-          onWillDisappear:()=>{
-            console.info('Page is about to disappear, isAddViewShow:', this.isAddViewShow);}
+          if(this.addViewDialogController)
+            this.addViewDialogController.open()
         })
     }
   }
@@ -898,10 +921,19 @@ struct taskListPage {
   }
 
   /**
+   * 用于新建视图时调用
+   * @returns listArr
+   */
+  getListArr(){
+    return this.listArr;
+  }
+
+  /**
    * 页面生命周期函数，消失时调用
    */
   aboutToDisappear(): void {
-    this.dialogController = null // 将dialogController置空
+    this.addListDialogController = null // 将addListDialogController置空
+    this.addViewDialogController = null
   }
 
   /**
@@ -968,5 +1000,140 @@ struct AddListDialog {
         .onClick(() => this.cancel())
         .margin(20)
     }
+  }
+}
+
+//-----------添加视图弹窗----------------
+@CustomDialog
+struct AddViewDialog {
+  @Prop listArr: Schedule.ScheduleList[]; // 从父组件接收的数据
+  controller?: CustomDialogController
+  textInputController: TextInputController = new TextInputController();
+  circularUnit: string[] = ['天', '周', '月'];
+  circularUnitSelected: number = 0;
+  circularUnitNum: number[] = [1, 7, 30];
+  confirmFlushScheduleList:() => void = ()=>{}
+  closeSelf:()=>void = ()=>{};
+  selectedLists: number[] = [];
+  viewName: string = '';
+  viewDays: number = 0;
+  viewListSns:number[] = [];
+
+  haha:()=>void = ()=>{console.log(this.listArr.length.toString())}
+
+  cancel: () => void = () => {
+    console.info("取消创建视图");
+    this.closeSelf();
+  };
+
+  confirm: () => void = async () => {
+    console.info("确认创建视图");
+    let context = this.getUIContext().getHostContext();
+    if (context) {
+      this.viewListSns = this.selectedLists;
+      await DataBase.DataBaseHelper.dbExecute(context, async (db) => {
+        let newView = new Schedule.View(
+          0, // 随便设一个id，数据库插入时会重新设置
+          this.viewDays,
+          this.viewName,
+          this.viewListSns
+        );
+        await db.addView(newView);
+      });
+    }
+    this.closeSelf();
+  };
+
+  build() {
+    Column() {
+      Text('创建视图')
+        .fontSize(18)
+        .height(50);
+
+      // 输入视图名
+      Column() {
+        Text('视图名称')
+          .margin({ left: 5, bottom: 10 });
+        TextInput({ text: this.viewName, controller: this.textInputController })
+          .width('90%')
+          .height(35)
+          .fontSize(16)
+          .margin({ left: 5, bottom: 10 })
+          .onChange((value: string) => {
+            this.viewName = value;
+          });
+      }.alignItems(HorizontalAlign.Start);
+
+      // 时间范围为未来几天
+      Column() {
+        Text('时间范围')
+          .fontSize(16)
+          .margin({ left: 5 })
+          .width('89%');
+        Row() {
+          TextInput()
+            .width('30%')
+            .height(35)
+            .fontSize(16)
+            .onChange((value: string) => {
+              if (!Number.isNaN(Number(value)))
+                this.viewDays = Number(value) * this.circularUnitNum[this.circularUnitSelected];
+            });
+          TextPicker({ range: this.circularUnit, selected: this.circularUnitSelected })
+            .onChange((value: string | string[]) => {
+              if (!Number.isNaN(Number(value)))
+                this.viewDays = Number(value) * this.circularUnitNum[this.circularUnitSelected];
+            })
+            .margin({ left: 15 })
+            .height('8%')
+            .width('20%');
+        };
+      }.alignItems(HorizontalAlign.Start);
+
+      // 选中的列表
+      Column() {
+        List() {
+          ForEach(this.listArr, (item: Schedule.ScheduleList, index: number) => {
+            ListItem() {
+              Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+                Checkbox({ name: 'checkbox_' + index.toString(), group: 'listGroup' })
+                  .selectedColor(0x39a2db)
+                  .shape(CheckBoxShape.ROUNDED_SQUARE)
+                  .onChange((value: boolean) => {
+                    if (value)
+                      this.selectedLists.push(item.listSn);
+                    else {
+                      const itemIndex = this.selectedLists.findIndex(sn => sn === item.listSn);
+                      if (itemIndex !== -1) {
+                        this.selectedLists.splice(itemIndex, 1);
+                      }
+                    }
+                    console.info(item.listName + 'change is' + value);
+                  })
+                  .unselectedColor(Color.Gray)
+                  .width(30)
+                  .height(30);
+                Text(item.listName)
+                  .fontSize(20);
+              };
+            };
+          });
+        };
+      };
+
+      // 确认与取消按钮
+      Row() {
+        Button('确认')
+          .onClick(() => this.confirm())
+          .margin({ right: 20 });
+        Button('hh')
+          .onClick(() => this.haha())
+          .margin({ right: 20 });
+        Button('取消')
+          .onClick(() => this.cancel());
+      }.justifyContent(FlexAlign.SpaceBetween);
+    }
+    .padding(20)
+    .backgroundColor(Color.White);
   }
 }
