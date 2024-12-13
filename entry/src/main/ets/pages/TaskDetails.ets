@@ -33,10 +33,10 @@ struct TaskDetails {
   @Builder EditSchedulePage() {
     Column() {
       // 标题
-      Text('编辑日程').fontSize(20).fontWeight(600).margin({ bottom: 20 });
+      Text('编辑日程').fontSize(20).fontWeight(600).margin({ bottom: 20 }).fontFamily('xlwk')
       // 输入任务名
       Column(){
-        Text('任务名称').margin({left:5,bottom:10})
+        Text('任务名称').margin({left:5,bottom:10}).fontFamily('xlwk')
         TextInput()
           .width('90%')
           .height(35)
@@ -49,7 +49,7 @@ struct TaskDetails {
 
       // 是否为周期事件
       Column() {
-        Text('周期时长').fontSize(16).margin({left:5}).width('89%')
+        Text('周期时长').fontSize(16).margin({left:5}).width('89%').fontFamily('xlwk')
         Row(){
           TextInput()
             .width('30%')
@@ -72,7 +72,7 @@ struct TaskDetails {
 
       // 开始时间
       Column(){
-        Text('开始时间').margin({left:5,bottom:10})
+        Text('开始时间').margin({left:5,bottom:10}).fontFamily('xlwk')
         Text(this.startTime.toLocaleString())
           .width('90%')
           .height(35)
@@ -102,7 +102,7 @@ struct TaskDetails {
 
       // 结束时间
       Column(){
-        Text('结束时间').margin({left:5,bottom:10})
+        Text('结束时间').margin({left:5,bottom:10}).fontFamily('xlwk')
         Text(this.endTime.toLocaleString())
           .width('90%')
           .height(35)
@@ -136,7 +136,7 @@ struct TaskDetails {
 
       // 优先级选择
       Column(){
-        Text('优先级').margin({left:5,bottom:5}).width('90%')
+        Text('优先级').margin({left:5,bottom:5}).width('90%').fontFamily('xlwk')
         Rating({ rating: this.prior, indicator: false })
           .stars(3)
           .stepSize(1)
@@ -147,7 +147,7 @@ struct TaskDetails {
 
       // 输入备注
       Column(){
-        Text('备注').margin({left:5,bottom:10})
+        Text('备注').margin({left:5,bottom:10}).fontFamily('xlwk')
         TextInput()
           .width('90%')
           .height(35)
@@ -156,13 +156,15 @@ struct TaskDetails {
           .onChange((value)=>{
             this.content = value;
           })
-      }.alignItems(HorizontalAlign.Start)
+      }
+      .alignItems(HorizontalAlign.Start)
 
       // 提交按钮
       Button('提交')
         .margin({top:40})
         .width('80%')
         .height(40)
+        .fontFamily('xlwk')
         .backgroundColor('#4CAF50')
         .onClick(async () => {
           let context = this.getUIContext().getHostContext()
@@ -184,6 +186,7 @@ struct TaskDetails {
             })
         });
     }
+    .alignItems(HorizontalAlign.Start)
     .padding(20)
     .backgroundColor(Color.White)
   }
@@ -262,43 +265,92 @@ struct TaskDetails {
       Column() {
         // 页面标题
         Row() {
-          Text('任务详情').fontSize(27).margin({ left: 20 });
+          Text('任务详情').fontSize(27).margin({ left: 20 }).fontFamily('xlwk');
         }.width('100%');
 
         // 任务名称
         Column() {
-          Text('任务名称').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.name).fontSize(16).margin({ left: 20 });
-        }.alignItems(HorizontalAlign.Start);
+          Text('任务名称').fontSize(18).fontWeight(600).margin({ top: 20, left: 20,bottom:5 }).fontFamily('xlwk');
+          Text(this.name).fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
+        }
+        .alignItems(HorizontalAlign.Start);
 
         // 周期时长
         Column() {
-          Text('周期时长').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.circular + ' 天').fontSize(16).margin({ left: 20 });
+          Text('周期时长').fontSize(18).fontWeight(600).margin({ top: 20, left: 20,bottom:5 }).fontFamily('xlwk');
+          Text(this.circular + ' 天').fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
         }.alignItems(HorizontalAlign.Start);
 
         // 开始时间
         Column() {
-          Text('开始时间').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.startTime?.toLocaleString()).fontSize(16).margin({ left: 20 });
+          Text('开始时间').fontSize(18).fontWeight(600).margin({ top: 20, left: 20,bottom:5 }).fontFamily('xlwk')
+          Text(this.startTime?.toLocaleString()).fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
         }.alignItems(HorizontalAlign.Start);
 
         // 结束时间
         Column() {
-          Text('结束时间').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.endTime?.toLocaleString()).fontSize(16).margin({ left: 20 });
+          Text('结束时间').fontSize(18).fontWeight(600).margin({ top: 20, left: 20,bottom:5 }).fontFamily('xlwk')
+          Text(this.endTime?.toLocaleString()).fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
         }.alignItems(HorizontalAlign.Start);
 
         // 优先级
         Column() {
-          Text('优先级').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.prior.toString()).fontSize(16).margin({ left: 20 });
+          Text('优先级').fontSize(18).fontWeight(600).margin({ top: 20, left: 20, bottom:5 }).fontFamily('xlwk')
+          Text(this.prior.toString()).fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
         }.alignItems(HorizontalAlign.Start);
 
         // 备注
         Column() {
-          Text('备注').fontSize(18).fontWeight(600).margin({ top: 20, left: 20 });
-          Text(this.content).fontSize(16).margin({ left: 20 });
+          Text('备注').fontSize(18).fontWeight(600).margin({ top: 20, left: 20,bottom:5 }).fontFamily('xlwk')
+          Text(this.content).fontSize(16).margin({ left: 20 }).fontFamily('xlwk')
+          Line()
+            .width(800)
+            .height(10)
+            .startPoint([10, 0])
+            .endPoint([350, 0])
+            .strokeOpacity(0.3)
+            .stroke(Color.Gray)
+            .alignSelf(ItemAlign.Start)
         }.alignItems(HorizontalAlign.Start);
 
         ForEach(this.childSchedules, (item: Schedule, index: number) => {

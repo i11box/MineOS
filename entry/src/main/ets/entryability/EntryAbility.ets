@@ -1,6 +1,6 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window } from '@kit.ArkUI';
+import { font,window } from '@kit.ArkUI';
 import * as database from '../data/entity';
 
 export default class EntryAbility extends UIAbility {
@@ -16,7 +16,7 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    database.DataBaseHelper.dbExecute(this.context,(db)=>{if(db) db.initSeqDB()})  // 数据库初始化
+    database.DataBaseHelper.dbExecute(this.context,(db)=>{if(db) db.initDB()})  // 数据库初始化
 
     console.info('Get RdbStore successfully.');
 
@@ -26,6 +26,10 @@ export default class EntryAbility extends UIAbility {
         hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
         return;
       }
+      font.registerFont({
+        familyName: 'xlwk',
+        familySrc: $rawfile('LXGWWENKAI-REGULAR.TTF')
+      })
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
     });
   }

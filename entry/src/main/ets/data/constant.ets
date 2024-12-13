@@ -3,11 +3,11 @@ import { securityLabel } from '@kit.CoreFileKit';
 
 //-----------数据库基本配置--------------
 
-export const DB_NAME = 'J_OS.db'
+export const DB_NAME = 'J_OS.db' // 数据库名称
 export const DB_CONFIG : relationalStore.StoreConfig = {
   name: DB_NAME,
   securityLevel: relationalStore.SecurityLevel.S1
-};
+}; // 数据库配置
 
 //-----------数据库语句----------------
 // Schedule 表定义
@@ -27,9 +27,6 @@ export const GET_TABLE_SCHEDULE = `
       FOREIGN KEY(parent_schedule_sn) REFERENCES schedule(schedule_sn)
   );
 `;
-
-
-
 
 // ScheduleList_Schedule 关联表定义
 export const GET_TABLE_SCHEDULE_LIST_SCHEDULE = `
@@ -89,6 +86,17 @@ export const CREATE_TABLE_VIEW = `
   )
 `
 
+export const GET_TABLE_SCHEDULE_LIST = `
+  CREATE TABLE IF NOT EXISTS schedule_list(
+    list_sn INTEGER PRIMARY KEY,
+    list_name TEXT
+  )
+`
+
+
 export const GET_TABLE:string[] = [
+  GET_TABLE_SCHEDULE,
+  GET_TABLE_SCHEDULE_LIST,
+  GET_TABLE_SCHEDULE_LIST_SCHEDULE,
   CREATE_TABLE_VIEW
 ]

@@ -822,7 +822,6 @@ export class DataBase {
     }
 
     viewNames = await this.queryViewsNameAll();
-    console.assert(viewNames.length>0,`视图长度不对`)
 
     // 将查询操作包装为一个 Promise
     return new Promise<scheduleClass.View[]>((resolve, reject) => {

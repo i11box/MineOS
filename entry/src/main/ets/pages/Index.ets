@@ -8,6 +8,7 @@ interface GeneratedTypeLiteralInterface_1 {
 
 @Entry
 @Component
+@Preview
 struct MainPage {
   @State private selectedTab: number = 0 // 0表示首页，1表示个人设置
   @State private slogan: string = "加油！"
@@ -25,6 +26,7 @@ struct MainPage {
         .margin(7)
       Text(text)
         .fontSize(12)
+        .fontFamily('xlwk')
         .fontColor(this.selectedTab === index ? $r('app.color.GREEN3') : $r('app.color.grey2'))
     }
     .width('100%')
@@ -61,7 +63,7 @@ struct MainPage {
     .onChange((index: number) => {
       this.selectedTab = index;
     })
-    .backgroundColor($r('app.color.KAQI1'))
+    .backgroundColor(Color.White)
   }
 
   aboutToAppear(): void {

@@ -15,12 +15,14 @@ export default struct HomeContent {
         Stack(){
           Image($r('app.media.blackboard')).width('100%').height('30%')
           Text(this.slogan)
-            .fontSize(20)
+            .fontSize(25)
             .textAlign(TextAlign.Center)
             .fontColor(Color.White)
+            .fontWeight(FontWeight.Bold)
             .width('100%')
             .height(200)
             .padding(20)
+            .fontFamily('xlwk')
         }
       }
       .width('100%')
@@ -28,49 +30,55 @@ export default struct HomeContent {
 
       // 中间内容部分
       Row() {
-        Flex({
-          justifyContent: FlexAlign.SpaceAround
-        }) {
-          // 日程
-          Column() {
-            Button('日程', { type: ButtonType.Normal, stateEffect: true })
-              .onClick(() => {
-                router.pushUrl( {url: 'pages/Sche',params:{
-                  slogan:this.slogan
-                }})
-              })
-              .height(100)
-              .width(100)
-              .borderRadius(40)
-          }
+        Stack(){
+          Image($r('app.media.food'))
+            .objectFit(ImageFit.Cover)
+            .width('110%')
+            .height('105%')
+          Grid(){
+            // 日程
+            GridItem(){
+              Column() {
+                Image($r('app.media.daily'))
+                  .objectFit(ImageFit.ScaleDown)
+                  .width('40%')
+                  .height('40%')
+                  .onClick(() => {
+                    router.pushUrl( {url: 'pages/Sche',params:{
+                      slogan:this.slogan
+                    }})
+                  })
+                Text('日程')
+                  .fontSize(20)
+                  .fontWeight(FontWeight.Bold)
+                  .textAlign(TextAlign.Center)
+                  .fontColor(Color.Black)
+                  .padding(10)
+                  .fontFamily('xlwk')
+              }
+            }
 
-          // 占位符1
-          Column() {
-            Text('占位符')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .textAlign(TextAlign.Center)
-              .fontColor(Color.Black)
-              .width(100)
-              .height(100)
-              .backgroundColor(Color.Gray)
-              .borderRadius(10)
-              .padding(20)
+            GridItem(){
+              // 转盘
+              Column() {
+                Image($r('app.media.zhuanpan'))
+                  .objectFit(ImageFit.ScaleDown)
+                  .width("40%").height('40%')
+                Text('转盘')
+                  .fontSize(20)
+                  .fontWeight(FontWeight.Bold)
+                  .textAlign(TextAlign.Center)
+                  .fontColor(Color.Black)
+                  .padding(5)
+                  .fontFamily('xlwk')
+              }
+            }
           }
-
-          // 占位符2
-          Column() {
-            Text('占位符')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .textAlign(TextAlign.Center)
-              .fontColor(Color.Black)
-              .width(100)
-              .height(100)
-              .backgroundColor(Color.Gray)
-              .borderRadius(10)
-              .padding(20)
-          }
+          .rowsTemplate('1fr 1fr 1fr')
+          .columnsTemplate('1fr 1fr 1fr')
+          .layoutDirection(GridDirection.Row)
+          .maxCount(3)
+          .margin({bottom:10})
         }
       }
       .width('100%')

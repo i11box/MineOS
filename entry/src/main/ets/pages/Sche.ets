@@ -4,6 +4,7 @@ import * as DataBase from '../data/entity';
 import * as Schedule from '../packages/schedule/schedule';
 import { ScheduleList } from '../packages/schedule/schedule';
 import {TaskDetailsBuilder} from './TaskDetails'
+import {formatDateTime} from '../packages/core/date'
 
 interface GeneratedTypeLiteralInterface_1 {
   slogan: string;
@@ -44,11 +45,13 @@ struct SchedulePage {
     }
     .hideBackButton(false)
     .title('日程管理', {
+      backgroundColor:'#FBE2B2',
+      backgroundBlurStyle:BlurStyle.BACKGROUND_THIN,
       paddingStart: LengthMetrics.vp(16),
       paddingEnd: LengthMetrics.vp(32),
     })
     .titleMode(NavigationTitleMode.Mini)
-    .mode(NavigationMode.Stack) // 分栏模式，可以改为堆栈模式 (Stack) 以适应页面需求
+    .mode(NavigationMode.Stack)
     .navDestination(this.PageMap) // 使用 PageMap 控制页面内容
     .titleMode(NavigationTitleMode.Mini)
     .width('100%')
@@ -120,12 +123,8 @@ struct taskListPage {
     customStyle: false,
     cornerRadius: 20,
     width: 300,
-    height: 600,
-    borderWidth: 1,
-    borderStyle: BorderStyle.Dashed,//使用borderStyle属性，需要和borderWidth属性一起使用
-    borderColor: Color.Blue,//使用borderColor属性，需要和borderWidth属性一起使用
+    height: 400,
     backgroundColor: Color.White,
-    shadow: ({ radius: 20, color: Color.Grey, offsetX: 50, offsetY: 0}),
   })
 
   //---------------添加视图所用变量-------------
@@ -158,17 +157,14 @@ struct taskListPage {
     customStyle: false,
     cornerRadius: 20,
     width: 300,
-    height: 600,
-    borderWidth: 1,
-    borderStyle: BorderStyle.Dashed,//使用borderStyle属性，需要和borderWidth属性一起使用
-    borderColor: Color.Blue,//使用borderColor属性，需要和borderWidth属性一起使用
+    height: 400,
     backgroundColor: Color.White,
     shadow: ({ radius: 20, color: Color.Grey, offsetX: 50, offsetY: 0}),
   })
   //-------------标题栏-----------------------
   @Builder NavigationTitle() {
     Column() {
-      Text('日程规划')
+      Text('日程规划').fontFamily('xlwk')
         .fontColor('#182431')
         .fontSize(25)
         .lineHeight(41)
@@ -204,11 +200,10 @@ struct taskListPage {
 
     Row(){
       // 构建尾端滑出组件
-      Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.ic_public_delete'))
-          .width(20)
-          .height(20)
-      }
+
+    Image($r('app.media.ic_public_delete'))
+      .width(20)
+      .height(20)
       .onClick(() => {
         // 建议使用this.getUIContext().showAlertDialog()
         AlertDialog.show(
@@ -251,21 +246,21 @@ struct taskListPage {
           }
         )
       })
-      // 添加子日程
-      if(isNeedSubSchedule){
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.ic_public_add'))
-            .width(20)
-            .height(20)
-            .onClick(()=>{
-              this.isAddSubScheduleShow = true;
-            })
-            .bindSheet($$this.isAddSubScheduleShow, this.AddSchedulePage('添加子日程',this.arrNotDone[index].scheduleSn), {
-              height: 600,
-              onWillDisappear:()=>{this.isAddSubScheduleShow = false;}
-            })
-        }
-      }
+      // 添加子日程 TODO:子日程的bo没设计好
+      // if(isNeedSubSchedule){
+      //   Button({ type: ButtonType.Circle }) {
+      //     Image($r('app.media.ic_public_add'))
+      //       .width(20)
+      //       .height(20)
+      //       .onClick(()=>{
+      //         this.isAddSubScheduleShow = true;
+      //       })
+      //       .bindSheet($$this.isAddSubScheduleShow, this.AddSchedulePage('添加子日程',this.arrNotDone[index].scheduleSn), {
+      //         height: 600,
+      //         onWillDisappear:()=>{this.isAddSubScheduleShow = false;}
+      //       })
+      //   }
+      // }
     }
   }
 
@@ -370,10 +365,14 @@ struct taskListPage {
   @Builder AddSchedulePage(pageTitle:string,parentSn:number =-1) {
     Column() {
       // 标题
-      Text(pageTitle).fontSize(20).fontWeight(600).margin({ bottom: 20 });
+      Text(pageTitle).fontWeight(FontWeight.Bold)
+        .fontFamily('xlwk')
+        .fontSize(20)
+        .fontWeight(600)
+        .margin({ bottom: 20 });
       // 输入任务名
       Column(){
-        Text('任务名称').margin({left:5,bottom:10})
+        Text('任务名称').margin({left:5,bottom:10}).fontFamily('xlwk').fontWeight(FontWeight.Bold)
         TextInput()
           .width('90%')
           .height(35)
@@ -386,7 +385,10 @@ struct taskListPage {
 
       // 是否为周期事件
       Column() {
-        Text('周期时长').fontSize(16).margin({left:5}).width('89%')
+        Text('周期时长').fontSize(16).fontWeight(FontWeight.Bold)
+          .margin({left:5})
+          .width('89%')
+          .fontFamily('xlwk')
         Row(){
           TextInput()
             .width('30%')
@@ -409,11 +411,12 @@ struct taskListPage {
 
       // 开始时间
       Column(){
-        Text('开始时间').margin({left:5,bottom:10})
-        Text(this.startTime.toLocaleString())
+        Text('开始时间').margin({left:5,bottom:10}).fontFamily('xlwk').fontWeight(FontWeight.Bold)
+        Text(formatDateTime(this.startTime))
           .width('90%')
           .height(35)
           .fontSize(16)
+          .fontFamily('xlwk')
           .margin({left:5,bottom:10})
           .onClick(() => {
             DatePickerDialog.show({ // 建议使用 this.getUIContext().showDatePickerDialog()接口
@@ -439,8 +442,9 @@ struct taskListPage {
 
       // 结束时间
       Column(){
-        Text('结束时间').margin({left:5,bottom:10})
-        Text(this.endTime.toLocaleString())
+        Text('结束时间').margin({left:5,bottom:10}).fontFamily('xlwk').fontWeight(FontWeight.Bold)
+        Text(formatDateTime(this.endTime))
+          .fontFamily('xlwk')
           .width('90%')
           .height(35)
           .fontSize(16)
@@ -456,7 +460,7 @@ struct taskListPage {
               textStyle: {color: '#468CED', font: {size: '18fp', weight: FontWeight.Normal}},
               selectedTextStyle: {color: '#468CED', font: {size: '18fp', weight: FontWeight.Bold}},
               onDateAccept: (value: Date) => {
-                if(value<=this.startTime){
+                if(value>=this.startTime){
                   this.endTimeSelected = value
                   this.endTime = value
                 }else{
@@ -473,7 +477,7 @@ struct taskListPage {
 
       // 优先级选择
       Column(){
-        Text('优先级').margin({left:5,bottom:5}).width('90%')
+        Text('优先级').margin({left:5,bottom:10}).width('90%').fontFamily('xlwk').fontWeight(FontWeight.Bold)
         Rating({ rating: this.prior, indicator: false })
           .stars(3)
           .stepSize(1)
@@ -484,19 +488,19 @@ struct taskListPage {
 
       // 输入备注
       Column(){
-        Text('备注').margin({left:5,bottom:10})
+        Text('备注').margin({top:10,left:5,bottom:10}).fontFamily('xlwk').fontWeight(FontWeight.Bold)
         TextInput()
           .width('90%')
           .height(35)
           .fontSize(16)
-          .margin({left:5,bottom:10})
+          .margin({left:5,bottom:5})
           .onChange((value)=>{
             this.content = value;
           })
       }.alignItems(HorizontalAlign.Start)
 
       // 提交按钮
-      Button('提交')
+      Button('提交').fontFamily('xlwk').fontWeight(FontWeight.Bold)
         .margin({top:40})
         .width('80%')
         .height(40)
@@ -613,7 +617,7 @@ struct taskListPage {
               }
             })
         })
-      MenuItem({content: "新建日程" })
+      MenuItem({content: "新建日程列表" })
         .onClick(()=>{
         if(this.addListDialogController)
           this.addListDialogController.open()
@@ -631,166 +635,187 @@ struct taskListPage {
 
   build(){
     NavDestination(){
-      Column() {
-        // 标题栏
-        Row() {
-          Text('日程列表').fontSize(20).margin({ left: 20 });
-          Image($r('app.media.ic_public_down_arrow'))
-            .width('8%')
-            .bindMenu(this.ListMenu)
-        }.width('100%');
-
-        // 搜索框
-        Row() {
-          Search({value:this.searchChangeValue,
-            placeholder:'搜索日程'
-          })
-            .width("90%")
-            .height(40)
-            .borderRadius(8)
-            .margin({left:20})
-            .borderStyle(BorderStyle.Solid)
-            .onChange((value:string)=>{
-              this.searchChangeValue = value;
-              if(value === '')
-                this.flushSchedules();
-            })
-            .onSubmit((value:string)=>{
-              this.searchSubmitValue = value;
-              this.flushSchedules();
-            })
-        }
-        .width("100%")
-        .margin({ top: 10, left: 20, right: 20, bottom:15 });
-
-        // 待完成任务列表
+      Stack(){
         Column() {
-          Text('待完成')
-            .fontSize(20)
-            .margin({ left: 15,bottom:10 })
-            .fontWeight(600)
-            .width('337')
-        }.alignItems(HorizontalAlign.Start)
+          // 标题栏
+          Row() {
+            Text('日程列表').fontSize(20).margin({ left: 20 }).fontFamily('xlwk');
+            Image($r('app.media.ic_public_down_arrow'))
+              .width('8%')
+              .bindMenu(this.ListMenu)
+          }.width('100%');
 
-        List({ space: 10 }) {
-          ForEach(this.arrNotDone, (item: Schedule.Schedule, index: number) => {
-            ListItem() {
-              Row() {
-                Image($r('app.media.ic_gallery_material_select_checkbo'))
-                  .width(24)
-                  .height(24)
-                  .margin({right:10})
-                  .onClick(() => { this.toggleComplete(index,false) });
+          // 搜索框
+          Row() {
+            Search({value:this.searchChangeValue,
+              placeholder:'搜索日程'
+            })
+              .width("90%")
+              .height(40)
+              .borderRadius(8)
+              .margin({left:20})
+              .borderStyle(BorderStyle.Solid)
+              .onChange((value:string)=>{
+                this.searchChangeValue = value;
+                if(value === '')
+                  this.flushSchedules();
+              })
+              .onSubmit((value:string)=>{
+                this.searchSubmitValue = value;
+                this.flushSchedules();
+              })
+          }
+          .width("100%")
+          .margin({ top: 10, left: 20, right: 20, bottom:15 });
 
+          // 待完成任务列表
+          Column() {
+            Text('待完成')
+              .fontFamily('xlwk')
+              .fontSize(20)
+              .margin({ left: 15,bottom:10 })
+              .fontWeight(600)
+              .width('337')
+            Line()
+              .width(800)
+              .height(10)
+              .startPoint([10, 0])
+              .endPoint([350, 0])
+              .strokeOpacity(0.3)
+              .stroke(Color.Gray)
+              .alignSelf(ItemAlign.Start)
+          }.alignItems(HorizontalAlign.Start)
+
+          List({ space: 10 }) {
+            ForEach(this.arrNotDone, (item: Schedule.Schedule, index: number) => {
+              ListItem() {
                 Row() {
+                  Image($r('app.media.pend_checkbo'))
+                    .width(24)
+                    .height(24)
+                    .margin({right:10})
+                    .onClick(() => { this.toggleComplete(index,false) });
+
+                  Row() {
+                    Column(){
+                      Text(item.name)
+                        .fontFamily('xlwk')
+                        .fontColor(item.prior == 0 ? Color.Black : item.prior == 1? Color.Orange : Color.Red)
+                        .fontSize(18)
+                        .fontWeight(400)
+                        .width(200)
+                        .baselineOffset(-5)
+                        .margin({ bottom: 5 });
+                      Text('开始时间：'+ formatDateTime(item.startTime))
+                        .fontFamily('xlwk')
+                        .fontSize(13)
+                        .opacity(0.6);
+
+                      Text('结束时间：'+ formatDateTime(item.endTime))
+                        .fontFamily('xlwk')
+                        .fontSize(13)
+                        .opacity(0.6);
+                    }
+                  }
+                  .onClick(() => {
+                    this.pageInfos.pushPath({
+                      name: "TaskDetails",
+                      param: item,
+                      onPop:(popInfo)=> {if(popInfo) this.flushSchedules()
+                      }
+                    })
+
+                  }
+                  )
+                }
+                .width('100%');
+              }
+              .margin({left:12})
+              .width('100%')
+              .backgroundColor(Color.White)
+              .swipeAction({
+                end: {
+                  // index为该ListItem在List中的索引值。
+                  builder: () => { this.itemEnd(index,true) },
+                }
+              })
+              .padding(5);
+            });
+          }.width('100%');
+
+          Blank().margin({bottom:20})
+
+          // 已完成任务标识
+          Column() {
+            Text('已完成')
+              .fontFamily('xlwk')
+              .fontSize(20)
+              .margin({ left: 15,bottom:10 })
+              .fontWeight(600)
+              .width('337')
+            Line()
+              .width(800)
+              .height(10)
+              .startPoint([10, 0])
+              .endPoint([350, 0])
+              .strokeOpacity(0.3)
+              .stroke(Color.Gray)
+              .alignSelf(ItemAlign.Start)
+          }.alignItems(HorizontalAlign.Start)
+
+          List({ space: 10 }) {
+            ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
+              ListItem() {
+                Row() {
+                  Image($r('app.media.done_checkbo'))
+                    .width(24)
+                    .height(24)
+                    .margin({right:10})
+                    .onClick(() => { this.toggleComplete(index,true) });
+
+
                   Column(){
                     Text(item.name)
+                      .fontFamily('xlwk')
+                      .fontColor(item.prior == 0 ? Color.Black : item.prior == 1? Color.Orange : Color.Red)
                       .fontSize(18)
                       .fontWeight(400)
+                      .width(200)
                       .baselineOffset(-5)
                       .margin({ bottom: 5 });
-                  }
-
-                  Column() {
-                    Text('开始时间：'+ item.startTime)
+                    Text('开始时间：'+ formatDateTime(item.startTime))
+                      .fontFamily('xlwk')
                       .fontSize(13)
                       .opacity(0.6);
 
-                    Text('结束时间：'+ item.endTime)
+                    Text('结束时间：'+ formatDateTime(item.endTime))
+                      .fontFamily('xlwk')
                       .fontSize(13)
                       .opacity(0.6);
                   }
-                  .width('100%');
-                }
-                .onClick(() => {
-                  this.pageInfos.pushPath({
+                  .onClick(() => this.pageInfos.pushPath({
                     name: "TaskDetails",
                     param: item,
-                    onPop:(popInfo)=> {if(popInfo) this.flushSchedules()
+                    onPop:(popInfo)=> {if(popInfo)
+                      this.flushSchedules()
                     }
-                  })
-
+                  }))
                 }
-                )
+                .width('100%');
               }
-              .width('100%');
-            }
-            .margin({left:12})
-            .width('100%')
-            .backgroundColor(Color.White)
-            .swipeAction({
-              end: {
-                // index为该ListItem在List中的索引值。
-                builder: () => { this.itemEnd(index,true) },
-              }
-            })
-            .padding(5);
-          });
-        }.width('100%');
-
-        Blank().margin({bottom:20})
-
-        // 已完成任务标识
-        Column() {
-          Text('已完成')
-            .fontSize(20)
-            .margin({ left: 15,bottom:10 })
-            .fontWeight(600)
-            .width('337')
-        }.alignItems(HorizontalAlign.Start)
-
-        List({ space: 10 }) {
-          ForEach(this.arrDone, (item: Schedule.Schedule, index: number) => {
-            ListItem() {
-              Row() {
-                Image($r('app.media.ic_gallery_material_select_checkbo'))
-                  .width(24)
-                  .height(24)
-                  .margin({right:10})
-                  .onClick(() => { this.toggleComplete(index,true) });
-
-                Row() {
-                  Column(){
-                    Text(item.name)
-                      .fontSize(18)
-                      .fontWeight(400)
-                      .baselineOffset(-5)
-                      .margin({ bottom: 5 });
-                  }
-
-                  Column() {
-                    Text('开始时间：'+ item.startTime)
-                      .fontSize(13)
-                      .opacity(0.6);
-
-                    Text('结束时间：'+ item.endTime)
-                      .fontSize(13)
-                      .opacity(0.6);
-                  }
-                  .width('100%');
+              .margin({left:12})
+              .width('100%')
+              .backgroundColor(Color.White)
+              .swipeAction({
+                end: {
+                  // index为该ListItem在List中的索引值。
+                  builder: () => { this.itemEnd(index,false) },
                 }
-                .onClick(() => this.pageInfos.pushPath({
-                  name: "TaskDetails",
-                  param: item,
-                  onPop:(popInfo)=> {if(popInfo)
-                    this.flushSchedules()
-                  }
-                }))
-              }
-              .width('100%');
-            }
-            .margin({left:12})
-            .width('100%')
-            .backgroundColor(Color.White)
-            .swipeAction({
-              end: {
-                // index为该ListItem在List中的索引值。
-                builder: () => { this.itemEnd(index,false) },
-              }
-            })
-            .padding(5);
-          });
-        }.width('100%')
+              })
+              .padding(5);
+            });
+          }.width('100%')
+        }
       }
     }.onWillShow(()=>{this.flushSchedules()})
     .onBackPressed(()=>{
@@ -977,21 +1002,32 @@ struct AddListDialog {
   build() {
     Column() {
       Text('新建日程列表')
-        .fontSize(18)
+        .fontFamily('xlwk')
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
         .height(100)
       Text('日程列表名')
-        .fontSize(18)
-        .height(100)
+        .fontFamily('xlwk')
+        .fontSize(20)
+        .margin({bottom:10})
       TextInput({text:this.inputValue,controller:this.textInputController})
         .onChange((value: string) => {
           this.inputValue = value
         })
-      Button('确认')
-        .onClick(() => this.confirm())
-        .margin(20)
-      Button('取消')
-        .onClick(() => this.cancel())
-        .margin(20)
+        .width('80%')
+        .margin({bottom:30})
+      Row(){
+        Button('确认')
+          .backgroundColor('#4CAF50')
+          .fontFamily('xlwk')
+          .onClick(() => this.confirm())
+          .margin(20)
+        Button('取消')
+          .backgroundColor('#4CAF50')
+          .fontFamily('xlwk')
+          .onClick(() => this.cancel())
+          .margin(20)
+      }
     }
   }
 }
@@ -1036,13 +1072,15 @@ struct AddViewDialog {
 
   build() {
     Column() {
-      Text('创建视图')
-        .fontSize(18)
+      Text('新建视图')
+        .fontFamily('xlwk')
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
         .height(50);
 
       // 输入视图名
       Column() {
-        Text('视图名称')
+        Text('视图名称').fontFamily('xlwk')
           .margin({ left: 5, bottom: 10 });
         TextInput({ text: this.viewName, controller: this.textInputController })
           .width('90%')
@@ -1056,7 +1094,7 @@ struct AddViewDialog {
 
       // 时间范围为未来几天
       Column() {
-        Text('时间范围')
+        Text('时间范围').fontFamily('xlwk')
           .fontSize(16)
           .margin({ left: 5 })
           .width('89%');
@@ -1113,9 +1151,11 @@ struct AddViewDialog {
       // 确认与取消按钮
       Row() {
         Button('确认')
+          .backgroundColor('#4CAE50')
           .onClick(() => this.confirm())
           .margin({ right: 20 });
         Button('取消')
+          .backgroundColor('#4CAE50')
           .onClick(() => this.cancel());
       }.justifyContent(FlexAlign.SpaceBetween);
     }

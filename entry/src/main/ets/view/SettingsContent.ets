@@ -23,33 +23,56 @@ export default struct SettingsContent {
 
   build() {
     // 关于全局应用设置
-    Column(){
-      Text("全局")
-        .alignSelf(ItemAlign.Start)
-        .margin({left:10,bottom:5})
-        .fontSize(20)
-      List() {
-        // 个人标语
-        ListItem() {
-          Column(){
-            Text('个人标语').fontSize(16).fontColor(Color.Gray).alignSelf(ItemAlign.Start).margin(10)
-            TextInput({
-              placeholder: this.slogan
-            }).width('90%')
-              .margin({left:5,top:5})
-              .border({width:0})
-              .onChange((value)=>{this.slogan = value})
-              .enterKeyType(EnterKeyType.Done)
-              .onSubmit((enterKey)=>{
-                if(enterKey === EnterKeyType.Done)
-                  this.SaveSettings()
-              })
+    Stack(){
+      Image($r('app.media.food'))
+        .width('100%')
+        .height('100%')
+        .objectFit(ImageFit.Cover)
+      Column(){
+        Text("全局")
+          .alignSelf(ItemAlign.Start)
+          .margin({left:15,bottom:10})
+          .fontSize(30)
+          .fontWeight(FontWeight.Bold)
+          .fontFamily('xlwk')
+        List() {
+          // 个人标语
+          ListItem() {
+            Column(){
+              Text('个人标语')
+                .fontWeight(FontWeight.Bold)
+                .fontFamily('xlwk')
+                .fontSize(20)
+                .fontColor(Color.Gray)
+                .alignSelf(ItemAlign.Start)
+                .margin(10)
+              Line()
+                .width(800)
+                .height(10)
+                .startPoint([10, 0])
+                .endPoint([350, 0])
+                .strokeOpacity(0.3)
+                .stroke(Color.Gray)
+                .alignSelf(ItemAlign.Start)
+              TextInput({
+                placeholder: this.slogan
+              }).width('90%')
+                .fontFamily('xlwk')
+                .margin({left:5,top:5})
+                .border({width:0})
+                .onChange((value)=>{this.slogan = value})
+                .enterKeyType(EnterKeyType.Done)
+                .onSubmit((enterKey)=>{
+                  if(enterKey === EnterKeyType.Done)
+                    this.SaveSettings()
+                })
+                .alignSelf(ItemAlign.Start)
+            }
           }
         }
+        .width('100%')
+        .height('94%')
       }
-      .width('100%')
-      .height('94%')
     }
   }
-
 }

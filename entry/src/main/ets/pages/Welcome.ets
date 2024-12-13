@@ -18,7 +18,7 @@ struct WelcomePage {
     }
     .height('100%')
     .width('100%')
-    .backgroundImage($r('app.media.welcomeBg'))
+    .backgroundImage($r('app.media.J_OS_bg'))
     .backgroundImageSize({ width: '100%', height: '100%' })
     .backgroundImagePosition({x:0,y:0})
   }

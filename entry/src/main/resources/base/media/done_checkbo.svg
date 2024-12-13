@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2">
+  <!-- 设置圆角背景 -->
+  <rect width="24" height="24" fill="#41A5EE" rx="4" ry="4" />
+  
+  <!-- 白色的勾 -->
+  <path d="M5 13l4 4L19 7" stroke="white" stroke-width="2" />
+</svg>
